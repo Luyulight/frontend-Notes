@@ -1,4 +1,148 @@
-## 1.JS事件
+
+
+# 1.JavaScript介绍
+
+### JavaScript实现
+
+```
+完整的JavaScript实现包含以下几个部分：  
+
+核心：（ECMAScript）
+
+扩展： DOM（文档对象模型） ：提供与网页内容交互的方法和接口。
+
+​      BOM （浏览器对象模型）：提供与浏览器交互的方法和接口。
+```
+
+# 2.HTML中的JavaScript
+
+### <script'>标签元素 
+
+#### 可选属性：
+
+ **async:** 不用等待脚本下载执行完后再加载页面，也不需要等待异步脚本加载完成后再加载其他脚本。
+
+​      有async标签的脚本不能保证按照出现的次序执行。
+
+**charset**: src指定的代码的字符集
+
+**crossorigin**: 配置相关请求的跨资源共享设置(CORS)。默认不使用。crossorigin="anonymous"配置文件请求不必设置凭据标志。crossorigin="use-credentials"设置凭据标志，出站请求会包含凭据
+
+**defer**: 表示脚本可以等到文档解析或显示完成后再执行。 浏览器会忽略行内脚本的defer属性
+
+**intergrity**: 允许比对接受到的资源和指定的加密签名以验证资源的完整性。签名不匹配会报错。
+
+**type**: 代替language属性，始终是"text/javascript"
+
+​     如果值是"module"，代码会被当成ES6模块且只有这种情况代码中才能出现import/export关键字
+
+**src**:  外部文件地址。使用src属性的<script>元素，会忽略标签内的行内代码。
+
+​     浏览器不会检查外部文件的扩展名，但是要保证返回正确的MINE类型。
+
+#### **行内脚本如果包含</script>字符串时，需要添加转义字符。如：**
+
+```html
+<script>
+  function test () {
+     //console.log("</script>");
+     console.log("<\/script>");
+  }
+</script>
+```
+
+### <script'>标签位置
+
+<script>元素至于页面的<head>标签内，目的主要是把外部的css和js文件集中到一起。但是这样有一个不好的地方。    必须把所有的JavaScript代码下载、解析和解释完成以后，才能开始渲染页面。对于大量外部js引入的页面，加载的时间内浏览器窗口将完全空白。
+优化方式一般是，把<script>元素移植<body>标签内的结尾处。
+当然也可以给<head>标签中的 ！！外部！！ <script>元素添加defer属性。
+或者添加async属性来异步加载。
+
+### <script'>元素的加载顺序
+
+**1.HTML5规范要求脚本按照出现的顺序执行。**
+
+**2.如果外部脚本申明了defer属性，它们会在浏览器执行到</html>标签结束后才会执行，且如果有多个defer属性，按照规范也会按照出现顺序相应地延迟执行。**
+
+**如果外部脚本申明了defer属性，它们会在浏览器执行到</html>标签结束后且在页面内的其他无defer属性的<script>执行后才会执行，且如果有多个defer属性，按照规范也会按照出现顺序相应地延迟执行。**
+
+**3.HTML5 规范要求脚本按照它们出现的先后顺序执行，因此第一个延迟脚本会先于第二个延迟脚本执行，而这两个脚本会先于 DOMContentLoaded 事件执行。在现实当中，延迟脚本并不一定会按照顺序执行，也不一定会在 DOMContentLoaded 事件触发前执行，因此最好只包含一个延迟脚本。(defer)**
+
+​		个人测试没有出现过延后的情况。个人感觉书上这么写的原因可能是因为， HTML5规范如此，但是每个浏览器厂商未必会按照这个规范实现(有待考究)
+
+**4.async 只适用于外部脚本文件，并告诉浏览器立即下载文件，下载完成后立即执行。但与 defer不同的是，标记为 async 的脚本并不保证按照指定它们的先后顺序执行。async脚本可以保证在load事件前执行，但是有可能在DOMContentLoaded事件之前或之后。**
+
+​		有关DOMContentLoaded 与 load区别，可以参见[演示链接](https://testdrive-archive.azurewebsites.net/HTML5/DOMContentLoaded/Default.html)。
+
+**5.（补充）async和defer的区别**
+
+​		这里引用一下知乎@ 编译青春的文章，讲的比较详细与直观 ： [你不知道的 DOMContentLoaded](https://zhuanlan.zhihu.com/p/25876048)
+
+### 动态加载脚本
+
+![img](https://upload-images.jianshu.io/upload_images/26063418-4020145be24f63d3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+​		以这种方式获取的资源对浏览器的预加载器是不可见的，这回严重影响到它们在资源获取队列中的优先级。
+
+​		想让预加载器知道这些动态请求文件的存在，可以再文档头部显示申明它们：
+
+```html
+<link rel="preload" href="gibberish.js">
+```
+
+### XHTML中的变化
+
+XHTML中，行内脚本小于号(<)会被解释成标签开始，所以需要替换成（&lt;）
+
+或者使用 
+
+```xhtml
+<![CDATA[ "   " ]]> 
+```
+
+来包裹行内脚本。
+
+------
+
+### <noscript'>元素
+
+不支持JavaScript时会显示标签内元素。
+
+# 3.语言基础
+
+## 3.4数据类型
+
+###  简单数据类型（原始类型）
+
+#### Undefined
+
+​	Undefined类型只有undefined一个值
+
+```js
+	null == undefined //true
+```
+
+​	undefined的目的就是明确空对象指针和未初始化变量的区别
+
+#### Null
+
+​	Null类型只有一个null值，逻辑上是一个空对象的指针
+
+#### Boolean
+
+#### Number
+
+#### String
+
+#### Symbol
+
+
+
+
+
+# 17.事件
+
+### 事件流：
 
 **事件冒泡：**<div> -> <body> -> <html> -> <document> -> (window)
 
@@ -509,312 +653,4 @@ event.button = 0;
 btn.fireEvent("onclick",event);
 ```
 
-## 2.jQuery delegate方法
-
-给元素的子元素添加事件处理程序
-
-参照：输入框数字限制
-
-```js
-function limitNumber(selector) {
-    selector = arguments[0]?arguments[0]:"input[type='number']";
-    var reg = /[^0-9]*$/g; //edge用\d不对
-    arr = [32];
-    $("main").delegate(selector, 'input', function(e){
-        $(this).val($(this).val().replace(reg,''));
-    });
-    $("main").delegate(selector, 'compositionend', function(e){
-        $(this).val($(this).val().replace(reg,''));
-    });
-}
-```
-
-## 3.var 、let 、const 
-
-var是函数作用域。
-
-let和const是块级作用域。
-
-var有变量提升，let和const没有。
-
-```js
-for(var i = 0 ; i<5; ++i){
-	setTimeout(()=>console.log(i), 0); //5,5,5,5,5
-}
-for(let i = 0 ; i<5; ++i){
-	setTimeout(()=>console.log(i), 0); //0,1,2,3,4
-}
-```
-
-```js
-function fn(){
-   var arr = [];
-   for(var i = 0;i < 5;i ++){
-	 arr[i] = function(){
-		 return i;
-	 }
-   }
-   return arr;
-}
-var list = fn();
-for(var i = 0,len = list.length;i < len ; i ++){
-   console.log(list[i]());
-}  // 5,5,5,5,5
-```
-
-```js
-function fn(){
-  var arr = [];
-  for(var i = 0;i < 5;i ++){
-	arr[i] = (function(i){
-		return function (){
-			return i;
-		};
-	})(i);
-  }
-  return arr;
-}
-var list = fn();
-for(var i = 0,len = list.length;i < len ; i ++){
-  console.log(list[i]());
-}  //0,1,2,3,4
-```
-
-## 4.防抖与节流
-
-1.防抖，事件停止一段时间后才进行事件处理
-
-```js
-function debounce(fn, delay){
-    let timer = null
-    return function(){
-        if(timer){
-            clearTimeout(timer)
-        }
-        timer = setTimeout(fn, delay)
-    }
-}
-window.onscroll = debounce(fn,1000)
-```
-
-```js
-function debounceAdvance(fn, delay){
-    let timer
-    return function() {
-        clearTimeout(timer)
-        timer = setTimeout(()=>{
-            console.log(this, arguments)
-            fn.apply(this, arguments)
-        },delay)
-    }
-}
-```
-
-2.节流，一段时间内只执行一次事件处理函数
-
-```js
-function throttle(fn, delay){
-    let valid = true
-    return function(){
-        if(!valid){
-            return false
-        }
-        valid = false
-        setTimeout(() => {
-            fn()
-            valid = true
-        },delay)
-    }
-}
-window.onscroll = throttle(fn,1000)
-```
-
-```js
-function throttleAdvance(fn, delay){
-    let valid = true
-    return function(){
-        if(!valid){
-            return false
-        }
-        valid = false
-        setTimeout(()=>{
-            fn.apply(this, arguments)
-            valid = true
-        },delay)
-    }
-}
-立即执行可以把fn拿到setTimeout外面
-```
-
-一般场景：
-
-比如实时搜索框，可以节流。或者防抖
-
-页面resize,防抖
-
-防抖方案（Debounce）
-
-- 搜索框搜索输入。只需用户最后一次输入完，再发送请求
-- 手机号、邮箱验证输入检测
-- 窗口大小Resize。只需窗口调整完成后，计算窗口大小。防止重复渲染。
-
-节流方案（Throttle）
-
-- 滚动加载，加载更多或滚到底部监听
-- 谷歌搜索框，搜索联想功能
-- 高频点击提交，表单重复提交（抢购、秒杀等）
-
-## 5.原型，原型链
-
-### 原型
-
-```html
-①所有引用类型都有一个__proto__(隐式原型)属性，属性值是一个普通的对象
-②所有函数都有一个prototype(原型)属性，属性值是一个普通的对象
-③所有引用类型的__proto__属性指向它构造函数的prototype
-```
-
-### 原型链
-
-```html
-当访问一个对象的某个属性时，会先在这个对象本身属性上查找，如果没有找到，则会去它的__proto__隐式原型上查找，即它的构造函数的prototype，如果还没有找到就会再在构造函数的prototype的__proto__中查找，这样一层一层向上查找就会形成一个链式结构，我们称为原型链。
-```
-
-### js中如何继承
-
-#### 1、属性继承
-
-```js
-function Person (name, age) {
-    this.name = name
-    this.age = age
-}
-
-// 方法定义在构造函数的原型上
-Person.prototype.getName = function () { console.log(this.name)}
-
-function Teacher (name, age, subject) {
-    Person.call(this, name, age)
-    this.subject = subject
-}
-```
-
-**属性的继承是通过在一个类内执行另外一个类的构造函数，通过`call`指定`this`为当前执行环境，这样就可以得到另外一个类的所有属性。**
-
-#### 2、方法继承
-
-```js
-Teacher.prototype = Object.create(Person.prototype)
-Teacher.prototype.constructor = Teacher
-```
-
-**[Object.create](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/create)简单说就是新建一个对象，使用现有的对象赋值给新建对象的`__proto__`**
-
-#### 3、hasOwnProperty
-
-**在原型链上查询属性比较耗时，对性能有影响，试图访问不存在的属性时会遍历整个原型链。**
-
-**遍历对象属性时，每个可枚举的属性都会被枚举出来。 要检查是否具有自己定义的属性，而不是原型链上的属性，必须使用hasOwnProperty方法。**
-
-**hasOwnProperty 是 JavaScript 中唯一处理属性并且不会遍历原型链的方法。**
-
-#### 4、instanceof ,valueOf(), typeof 
-
-typeof 返回的是类型的字符串值
-
-`valueOf()`函数用于返回指定对象的原始值。该方法属于`Object`对象，由于所有的对象都"继承"了Object的对象实例，因此几乎所有的实例对象都可以使用该方法。所有主流浏览器均支持该函数。
-
-`instanceof` 运算符用来测试一个对象在其原型链中是否存在一个构造函数的 `prototype` 属性。
-
-## 6.Promise
-
-promise是一个对象，对象和函数的区别就是对象可以保存状态，函数不可以（闭包除外）
-
-并未剥夺函数return的能力，因此无需层层传递callback，进行回调获取数据
-
-代码风格，容易理解，便于维护
-
-多个异步等待合并便于解决
-
-https://zhuanlan.zhihu.com/p/144058361
-
-```js
-new Promise(
-  function (resolve, reject) {
-    // 一段耗时的异步操作
-    resolve('成功') // 数据处理完成
-    // reject('失败') // 数据处理出错
-  }
-).then(
-  (res) => {console.log(res)},  // 成功
-  (err) => {console.log(err)} // 失败
-)
-```
-
-#### 手写一个promise
-
-```js
-const PENDING = 'pending'
-const FULFILLED = 'fulfilled'
-const REJECTED = 'rejected'
-function Promise(executor) {
-    var _this = this
-    this.state = PENDING; //状态
-    this.value = undefined; //成功结果
-    this.reason = undefined; //失败原因
-
-    this.onFulfilled = [];//成功的回调
-    this.onRejected = []; //失败的回调
-    function resolve(value) {
-        if(_this.state === PENDING){
-            _this.state = FULFILLED
-            _this.value = value
-            _this.onFulfilled.forEach(fn => fn(value))
-        }
-    }
-    function reject(reason) {
-        if(_this.state === PENDING){
-            _this.state = REJECTED
-            _this.reason = reason
-            _this.onRejected.forEach(fn => fn(reason))
-        }
-    }
-    try {
-        executor(resolve, reject);
-    } catch (e) {
-        reject(e);
-    }
-}
-Promise.prototype.then = function (onFulfilled, onRejected) {
-    if(this.state === FULFILLED){
-        typeof onFulfilled === 'function' && onFulfilled(this.value)
-    }
-    if(this.state === REJECTED){
-        typeof onRejected === 'function' && onRejected(this.reason)
-    }
-    if(this.state === PENDING){
-        typeof onFulfilled === 'function' && this.onFulfilled.push(onFulfilled)
-        typeof onRejected === 'function' && this.onRejected.push(onRejected)
-    }
-};
-```
-
-...待完成
-
-手写一个timeout函数
-
-## 7.正则表达式
-
-str.search()返回子串的起始位置
-
-str.replace(Reg,'adasd')
-
-i大小写不敏感,g全局匹配,m多行匹配,
-
-[abc],[0-9],(x|y)
-
-\d \s \b \w \uxxxx n+ n* n?
-
-...待完成
-
-## 8.柯里化，手写
+## 
