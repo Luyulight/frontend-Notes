@@ -11,7 +11,7 @@
 
 扩展： DOM（文档对象模型） ：提供与网页内容交互的方法和接口。
 
-​      BOM （浏览器对象模型）：提供与浏览器交互的方法和接口。
+      BOM （浏览器对象模型）：提供与浏览器交互的方法和接口。
 ```
 
 # 2.HTML中的JavaScript
@@ -124,19 +124,217 @@ XHTML中，行内脚本小于号(<)会被解释成标签开始，所以需要替
 
 ​	undefined的目的就是明确空对象指针和未初始化变量的区别
 
+typeof undefined的变量和未声明的变量都是undefined
+
+**不确定null或者undefined可以使用String()来转换**
+
 #### Null
 
 ​	Null类型只有一个null值，逻辑上是一个空对象的指针
 
 #### Boolean
 
+```
+Boolean(变量) 通过构造函数强制转换变量
+Boolean       true                      false
+String        非空字符串			         ""
+Number		  非零数值包括Infinity   	 	0、NaN
+Object 		  任意对象                   null
+Undefined     只会变成false
+```
+
 #### Number
+
+最大值最小值在Number.MIN_VALUE和Number.MAX_VALUE中
+
+0.1+0.2 ！= 0.3是因为使用了IEEE754数值造成的精度问题
+
+默认情况下，ECMAScript会讲小数点后至少包含6个零的浮点值转换为科学计数法
+
+isFinite(变量)判断是否超出范围
+
+Number.POSITIVE_INFINITY Number.NEGATIVE_INFINITY 值为正负Infinity
+
+isNaN(变量)任意值判断是不是“不是数值”
+
+```js
+console.log(isNaN(NaN)); //true
+console.log(isNaN(10)); //false
+console.log(isNaN("10")); //false 可以转换为10
+console.log(isNaN("blue")); //true 不可以转换为数值
+console.log(isNaN(true)); //false 可以转换为数值1
+```
+
+```
+isNaN()可以用来测试对象，首先调用对象的valueOf()方法，然后确定返回值能否转换为数值，如果不能，再调用toString()方法测试返回值
+这是通常的ECMAScript内置函数和操作符的工作方式
+```
+
+##### 数值转换
+
+###### Number()
+
+```js
+// 布尔值转换为01
+// 数值直接返回
+// null返回0
+// undefined返回NaN
+// 字符串:
+包含数值字符包括加减号，转换为十进制数值
+包含有效浮点数格式，转换为浮点数
+"0x,"转换为16进制对应的10进制的数值
+空字符串转换为0
+其他NaN
+// 对象
+同isNaN，先调用对象的valueOf()，如果转换结果是NaN，则调用toString然后按照字符串格式转换
+```
+
+###### parseInt()
+
+```js
+// 从第一个不是空格字符开始转换，第一个字符不是数值字符加号或者减号，则立即返回NaN （Number空字符串转换是0）；一直转换到非字符为止
+// 0x开头默认16进制，0开头默认8进制
+//parseInt可以传第二个参数表示进制
+parseInt('0xaf') === parseInt('AF',16)  //175
+parseInt('AF') //NaN
+```
+
+###### parseFloat()
+
+```js
+// 类似parseInt 识别所有浮点格式以及十进制格式(忽略开头的0) 
+// 只解析10进制 16进制始终返回0
+// 可以解析科学计数法字符串
+```
 
 #### String
 
+\n换行，\t制表，\b退格，\r回车,  \f换页,  ...
+
+ES中，字符串是不可变的，一旦创建如果修改，则需要销毁原始字符串，然后包含新值的另一字符串保存到变量
+
+几乎所有值都有toString()方法
+
+toString(n)表示转换为进制的字符串
+
+##### 格式转换
+
+###### String()
+
+```
+// 如果值有toString方法则调用该方法不传参数
+// null返回"null" undefined返回"undefined"
+```
+
+###### 加号操作符加上空字符串
+
+##### 模版字面量
+
+所有模版字面量中的值都会被toString强转成字符串，可以调用函数方法
+
+模版字面量标签函数
+
+```js
+function simpleTag(strings,...expressions){
+	console.log(strings)
+	for(const expression of exporessions){
+		console.log(expression)
+	}
+	return 'foobar'
+}
+let a=6,b=9
+let tag = simpleTag`${ a } + ${ b } = ${ a + b }`
+//["", " + ", " = ", ""]
+//6
+//9
+//15
+```
+
+模版字面量里原始字符串会被识别（换行符，Unicode等等)
+
+使用String.raw标签函数来处理，但是原始换行符不会被阻断
+
+```js
+console.log(`firstline\nsecondline`)
+//firstline
+//secondline
+console.log(String.raw`firstlin\nsecondline`)
+//firstline\nsecondline
+console.log(`firstline
+secondline`)
+//firstline
+//secondline
+console.log(String.raw`firstline
+secondline`)
+//firstline
+//secondline
+```
+
+也可以使用标签函数的第一个参数，字符串数组的.raw属性来取得每个字符串的原始内容
+
+```js
+function printRaw(strings){
+    console.log('actual')
+    for(const string of strings){
+        cosnoel.log(string)
+    }
+    console.log('escaped')
+    for(const rawString of strings.raw){
+        console.log(rawString)
+    }
+}
+printRaw`\u00A9${ 'and'}\n`
+//actual
+//©
+//escaped
+//\u00A9
+//\n
+```
+
 #### Symbol
 
+符号实例是唯一不可变的
 
+用途是确保对象属性使用唯一标识符，不会发生属性冲突危险
+
+符号类似私有属性，**但是并不是为了提供私有属性行为才增加的**，相反，符号就是用来创建唯一记号，进而用作非字符串形式的对象属性
+
+##### ①符号基本用法
+
+使用Symbol()函数初始化
+
+Symbol('description') decription与符号的定义和标识无关，只用于调试
+
+```
+let symbo1 = Symbol('foo')
+let symbo2 = Symbol('foo')
+symbo1 == symbo2 //false
+let symbo3 = Symbol()
+console.log(symbo1) //Symbol(foo)
+console.log(symbo2) //Symbol(foo)
+console.log(symbo3) //Symbol()
+```
+
+**Symbol不能用作构造函数，与new关键字一起使用**为了避免创建符号包装对象
+
+```
+console.log(typeof new Boolean()) //object
+//Number String同理
+```
+
+##### ②全局符号注册表
+
+如果需要重用symbol实例，则以一个字符串为键，在全局符号注册表中创建并重用符号
+
+使用Symbol.for()方法
+
+```
+let sym1 = Symbol.for('foo')
+let sym2 = Symbol.for('foo')
+let sym3 = Symbol('foo')
+sym2 ===sym1 //true
+sym2 === sym3 //false
+```
 
 
 
