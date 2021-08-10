@@ -328,13 +328,188 @@ console.log(typeof new Boolean()) //object
 
 使用Symbol.for()方法
 
-```
+```js
 let sym1 = Symbol.for('foo')
 let sym2 = Symbol.for('foo')
 let sym3 = Symbol('foo')
 sym2 ===sym1 //true
 sym2 === sym3 //false
 ```
+
+```js
+let s = Symbol.for('foo')
+console.log(Symbol.keyFor(s)) //foo
+Symbol.keyFor(123) //TypeError:123 is not a symbol
+```
+
+##### ③使用符号作为属性
+
+```js
+let s1 = Symbol('foo')
+let s2 = Symbol('bar')
+let o = {
+	[s1]:'foo val'
+}
+//或者 o[s1]='foo bar'
+Object.defineProperty(o,s2,{value:'bar val'})
+console.log(o) //{Symbol(foo):foo val,Symbol(bar):bar val}
+//或者 Object.defineProperties{o,{
+	[s1]:{value:'foo val'},
+	[s2]:{value:'bar val'}
+}}
+```
+
+```js
+let o ={
+	[s1]:{value:'foo val'},
+	[s2]:{value:'bar val'},
+	baz:'baz val',
+	qux:'qux val'
+}
+Object.getOwnPropertySymbols(o) //[Symbol(foo),Symbol(bar)]
+Object.getOwnPropertyNames(o)	//["baz","quz"]
+Object.getOwnPropertyDescriptors(o) //{baz:{...},quz:{...},Symbol(foo):{...},Symbol(bar):{...}}
+Reflect.ownKeys(o) //["baz","quz",Symbol(foo),Symbol(bar)]
+```
+
+符号属性是对内存中符号的一个引用，直接创建用作属性的符号不会丢失。但是如果没有显示地保存对这些属性的引用，必须遍历对象所有的符号属性才能找到相应的属性键（因为Symbol(foo)不等于Symbol(foo))
+
+```js
+let o = {
+	Symbol('foo'):{value:'foo val'},
+	Symbol('bar'):{value:'bar val'}
+}
+console.log(o) //{Symbol(foo):foo val,Symbol(bar):bar val}
+let barSymbol = Object.getOwnPropertySymbols(o).find((symbol)=>symbol.toString().match(/bar/))
+console.log(barSymbol) //Symbol(bar)
+```
+
+##### ④常用内置符号
+
+ES6引入了一批常用内置符号，用于暴露语言内部行为，这些内置符号都以Symbol工厂函数字符串属性的形式存在
+
+重要用途之一就是访问并重新定义他们，从而改变原生结构的行为。
+
+内置符号就是全局函数Symbol的普通字符串属性。所有内置符号属性都是不可写不可枚举不可配置的
+
+```js
+let a = Symbol
+console.log(Reflect.ownKeys(a))
+//["length", "name", "prototype", "for", "keyFor", "asyncIterator", "hasInstance", "isConcatSpreadable", "iterator", "match", "matchAll", "replace", "search", "species", "split", "toPrimitive", "toStringTag", "unscopables"]
+```
+
+一般引用这些符号名称，可以用@@形式，比如@@iterator指的就是Symbol.iterator(仅描述，不用于代码)
+
+##### ⑤Symbol.asyncIterator
+
+返回对象默认的AsyncIterator,表示实现异步迭代器API的函数
+
+```js
+class Emitter{
+	constructor(max) {
+		this.max = max
+		this.asyncIdx = 0
+	}
+	async *[Symbol.asyncIterator](){
+		while(this.asyncIdx < this.max){
+			yield new Promise((resolve)=>resolve(this.asyncIdx++))
+		}
+	}
+}
+async function asyncCount(){
+	let emitter = new Emitter(5)
+	for await(const x of emitter){
+		console.log(x)
+	}
+}
+asyncCount()
+//0
+//1
+//2
+//3
+//4
+```
+
+##### ⑥Symbol.hasInstance
+
+instanceof操作符可以用来确定一个对象实例的原型链上是否有原型
+
+```js
+function Foo(){}
+let f = new Foo()
+console.log(f instanceof Foo)//true
+```
+
+ES6中instanceof操作符会使用Symbol.hasInstance函数来确定关系
+
+```
+function Foo(){}
+let f = new Foo()
+console.log(Foo[Symbol.hasInstance](f))//true
+```
+
+##### ⑦Symbol.isConcatSpreadable
+
+false或假值会阻止concat将加入的对象打平追加到数组中，而是保留原对象
+
+```js
+let initial = ['foo']; 
+let array = ['bar']; 
+console.log(array[Symbol.isConcatSpreadable]); // undefined 
+console.log(initial.concat(array)); // ['foo', 'bar'] 
+array[Symbol.isConcatSpreadable] = false; 
+console.log(initial.concat(array)); // ['foo', Array(1)]
+
+let arrayLikeObject = { length: 1, 0: 'baz' }; 
+console.log(arrayLikeObject[Symbol.isConcatSpreadable]); // undefined 
+console.log(initial.concat(arrayLikeObject)); // ['foo', {...}] 
+arrayLikeObject[Symbol.isConcatSpreadable] = true; 
+console.log(initial.concat(arrayLikeObject)); // ['foo', 'baz'] 
+
+let otherObject = new Set().add('qux'); 
+console.log(otherObject[Symbol.isConcatSpreadable]); // undefined 
+console.log(initial.concat(otherObject)); // ['foo', Set(1)] 
+otherObject[Symbol.isConcatSpreadable] = true; 
+console.log(initial.concat(otherObject)); // ['foo']
+```
+
+##### ⑧Symbol.iterator
+
+```js
+class Foo { 
+ *[Symbol.iterator]() {} 
+} 
+let f = new Foo(); 
+console.log(f[Symbol.iterator]()); 
+// Generator {<suspended>} 
+```
+
+```js
+ constructor(max) { 
+ this.max = max; 
+ this.idx = 0; 
+ } 
+ *[Symbol.iterator]() { 
+ while(this.idx < this.max) { 
+ yield this.idx++; 
+ } 
+ } 
+} 
+function count() { 
+ let emitter = new Emitter(5); 
+ for (const x of emitter) { 
+ console.log(x); 
+ } 
+} 
+count(); 
+// 0
+// 1 
+// 2 
+// 3 
+// 4
+```
+
+##### ⑨Symbol.match
 
 
 
