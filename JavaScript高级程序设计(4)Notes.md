@@ -183,6 +183,7 @@ isNaN()可以用来测试对象，首先调用对象的valueOf()方法，然后�
 包含数值字符包括加减号，转换为十进制数值
 包含有效浮点数格式，转换为浮点数
 "0x,"转换为16进制对应的10进制的数值
+"0o"转换为8进制对应的10进制数值
 空字符串转换为0
 其他NaN
 // 对象
@@ -450,7 +451,9 @@ console.log(Foo[Symbol.hasInstance](f))//true
 
 ##### ⑦Symbol.isConcatSpreadable
 
-false或假值会阻止concat将加入的对象打平追加到数组中，而是保留原对象
+false或假值会阻止concat将加入的数组对象（数组或者数组对象）打平追加到数组中，而是保留原对象
+
+而其他不是类数组的对象，在true的情况下会被忽略
 
 ```js
 let initial = ['foo']; 
@@ -490,9 +493,9 @@ console.log(f[Symbol.iterator]());
  this.idx = 0; 
  } 
  *[Symbol.iterator]() { 
- while(this.idx < this.max) { 
- yield this.idx++; 
- } 
+     while(this.idx < this.max) { 
+        yield this.idx++; 
+     } 
  } 
 } 
 function count() { 
@@ -510,6 +513,790 @@ count();
 ```
 
 ##### ⑨Symbol.match
+
+这个符号作为“一个正则表达式方法，该方法用正则去匹配字符串。由String.prototype.match()方法使用”
+
+String.prototype.match()方法会使
+用以Symbol.match 为键的函数来对正则表达式求值。正则表达式的原型上默认有这个函数的定义，因此所有正则表达式实例默认是这个String 方法的有效参数
+
+```js
+console.log(RegExp.prototype[Symbol.match]);
+// ƒ [Symbol.match]() { [native code] }
+console.log('foobar'.match(/bar/));
+// ["bar", index: 3, input: "foobar", groups: undefined]
+```
+
+给这个方法传入非正则表达式值会导致该值被转换为RegExp 对象。如果想改变这种行为，让方法直接使用参数，则可以重新定义Symbol.match 函数以取代默认对正则表达式求值的行为，从而让match()方法使用非正则表达式实例。Symbol.match 函数接收一个参数，就是调用match()方法的字符串实例。返回的值没有限制：
+
+```js
+class FooMatcher {
+    static [Symbol.match](target) {
+    	return target.includes('foo');
+    }
+}
+console.log('foobar'.match(FooMatcher)); // true
+console.log('barbaz'.match(FooMatcher)); // false
+class StringMatcher {
+    constructor(str) {
+    	this.str = str;
+    }
+	[Symbol.match](target) {
+		return target.includes(this.str);
+	}
+}
+console.log('foobar'.match(new StringMatcher('foo'))); // true
+console.log('barbaz'.match(new StringMatcher('qux'))); // false
+```
+
+##### ⑩Symbol.replace
+
+介绍同Symbol.match
+
+```js
+console.log(RegExp.prototype[Symbol.replace]);
+// ƒ [Symbol.replace]() { [native code] }
+console.log('foobarbaz'.replace(/bar/, 'qux'));
+// 'fooquxbaz'
+class FooReplacer {
+    static [Symbol.replace](target, replacement) {
+    	return target.split('foo').join(replacement);
+    }
+}
+console.log('barfoobaz'.replace(FooReplacer, 'qux'));
+// "barquxbaz"
+class StringReplacer {
+    constructor(str) {
+    	this.str = str;
+    }
+    [Symbol.replace](target, replacement) {
+    	return target.split(this.str).join(replacement);
+    }
+}
+console.log('barfoobaz'.replace(new StringReplacer('foo'), 'qux'));
+// "barquxbaz"
+```
+
+##### ①①Symbol.search
+
+介绍同Symbol.match
+
+```js
+console.log(RegExp.prototype[Symbol.search]);
+// ƒ [Symbol.search]() { [native code] }
+console.log('foobar'.search(/bar/));
+// 3
+class FooSearcher {
+    static [Symbol.search](target) {
+    	return target.indexOf('foo');
+    }
+}
+ console.log('foobar'.search(FooSearcher)); // 0
+console.log('barfoo'.search(FooSearcher)); // 3
+console.log('barbaz'.search(FooSearcher)); // -1
+class StringSearcher {
+    constructor(str) {
+    	this.str = str;
+    }
+    [Symbol.search](target) {
+    	return target.indexOf(this.str);
+    }
+}
+console.log('foobar'.search(new StringSearcher('foo'))); // 0
+console.log('barfoo'.search(new StringSearcher('foo'))); // 3
+console.log('barbaz'.search(new StringSearcher('qux'))); // -1
+```
+
+##### ①②Symbol.species
+
+这个符号作为一个属性表示“一个函数值，该函数作为创建派生对象的构造函数”。这个属性在内置类型中最常用，用于对内置类型实例方法的返回值暴露实例化派生对象的方法。用Symbol.species 定义静态的获取器（getter）方法，可以覆盖新创建实例的原型定义：
+
+```js
+class Bar extends Array {}
+class Baz extends Array {
+    static get [Symbol.species]() {
+    	return Array;
+    }
+}
+let bar = new Bar();
+console.log(bar instanceof Array); // true
+console.log(bar instanceof Bar); // true
+bar = bar.concat('bar');
+console.log(bar instanceof Array); // true
+console.log(bar instanceof Bar); // true
+
+let baz = new Baz(); // Baz[]
+console.log(baz instanceof Array); // true
+console.log(baz instanceof Baz); // true
+baz = baz.concat('baz'); //['bsx'] 丢失了原来的Baz原型
+console.log(baz instanceof Array); // true
+console.log(baz instanceof Baz); // false
+
+class Bat extends Array {
+    static get [Symbol.species]() {
+    	return Bat; //!!
+    }
+}
+let bat = new Bat(); // Bat[]
+console.log(bat instanceof Array); // true
+console.log(bat instanceof Bat); // true
+bat = bat.concat('bat'); //Bat['bat'] 
+console.log(bat instanceof Array); // true
+console.log(bat instanceof Bat); // true
+```
+
+##### ①③Symbol.split
+
+介绍同Symbol.match
+
+```js
+console.log(RegExp.prototype[Symbol.split]);
+// ƒ [Symbol.split]() { [native code] }
+console.log('foobarbaz'.split(/bar/));
+// ['foo', 'baz']
+class FooSplitter {
+    static [Symbol.split](target) {
+    	return target.split('foo');
+    }
+}
+console.log('barfoobaz'.split(FooSplitter));
+// ["bar", "baz"]
+class StringSplitter {
+    constructor(str) {
+    	this.str = str;
+    }
+    [Symbol.split](target) {
+    	return target.split(this.str);
+    }
+}
+console.log('barfoobaz'.split(new StringSplitter('foo')));
+// ["bar", "baz"]
+```
+
+##### ①④Symbol.toPrimitive
+
+​		根据ECMAScript 规范，这个符号作为一个属性表示“一个方法，该方法将对象转换为相应的原始值。由ToPrimitive 抽象操作使用”。很多内置操作都会尝试强制将对象转换为原始值，包括字符串、
+​		数值和未指定的原始类型。对于一个自定义对象实例，通过在这个实例的Symbol.toPrimitive 属性上定义一个函数可以改变默认行为。根据提供给这个函数的参数（string、number 或default），可以控制返回的原始值：
+
+```js
+class Foo {}
+let foo = new Foo();
+console.log(3 + foo); // "3[object Object]"
+console.log(3 - foo); // NaN
+console.log(String(foo)); // "[object Object]"
+class Bar {
+    constructor() {
+        this[Symbol.toPrimitive] = function(hint) {
+            switch (hint) {
+            	case 'number':
+            		return 3;
+            	case 'string':
+            		return 'string bar';
+            	case 'default':
+            	default:
+            		return 'default bar';
+            }
+        }
+    }
+}
+```
+
+##### ①⑤Symbol.toStringTag
+
+根据ECMAScript 规范，这个符号作为一个属性表示“一个字符串，该字符串用于创建对象的默认字符串描述。由内置方法Object.prototype.toString()使用”。
+通过toString()方法获取对象标识时，会检索由Symbol.toStringTag 指定的实例标识符，默认为"Object"。内置类型已经指定了这个值，但自定义类实例还需要明确定义：
+
+```js
+let s = new Set();
+console.log(s); // Set(0) {}
+console.log(s.toString()); // [object Set]
+console.log(s[Symbol.toStringTag]); // Set
+class Foo {}
+let foo = new Foo();
+console.log(foo); // Foo {}
+console.log(foo.toString()); // [object Object]
+console.log(foo[Symbol.toStringTag]); // undefined
+class Bar {
+    constructor() {
+    	this[Symbol.toStringTag] = 'Bar';
+    }
+}
+let bar = new Bar();
+console.log(bar); // Bar {}
+console.log(bar.toString()); // [object Bar]
+console.log(bar[Symbol.toStringTag]); // Bar
+```
+
+##### ①⑥Symbol.unscopables
+
+根据ECMAScript 规范，这个符号作为一个属性表示“一个对象，该对象所有的以及继承的属性，都会从关联对象的with 环境绑定中排除”。设置这个符号并让其映射对应属性的键值为true，就可以阻止该属性出现在with 环境绑定中
+
+```js
+let o = { foo: 'bar' };
+with (o) {
+	console.log(foo); // bar
+}
+o[Symbol.unscopables] = {
+	foo: true
+};
+with (o) {
+	console.log(foo); // ReferenceError
+}
+```
+
+### 复杂类型
+
+#### Object
+
+```js
+每个Object 实例都有如下属性和方法。
+constructor
+//用于创建当前对象的函数。在前面的例子中，这个属性的值就是Object()函数。
+hasOwnProperty(propertyName)
+//用于判断当前对象实例（不是原型）上是否存在给定的属性。要检查的属性名必须是字符串（如o.hasOwnProperty("name")）或符号。
+isPrototypeOf(object)
+//用于判断当前对象是否为另一个对象的原型。
+propertyIsEnumerable(propertyName)
+//用于判断给定的属性是否可以使用。与hasOwnProperty()一样，属性名必须是字符串。
+toLocaleString()
+//返回对象的字符串表示，该字符串反映对象所在的本地化执行环境。
+toString()
+//返回对象的字符串表示。
+valueOf()
+//返回对象对应的字符串、数值或布尔值表示。通常与toString()的返回值相同。
+```
+
+## 3.5操作符
+
+### 3.5.1一元操作符
+
+#### ++ --
+
+```js
+let num1 = 2;
+let num2 = 20;
+let num3 = --num1 + num2;
+let num4 = num1 + num2;
+console.log(num3); // 21
+console.log(num4); // 21
+```
+
+```js
+let num1 = 2;
+let num2 = 20;
+let num3 = num1-- + num2;
+let num4 = num1 + num2;
+console.log(num3); // 22
+console.log(num4); // 21
+```
+
+```
+递增和递减操作符遵循如下规则。
+ 对于字符串，如果是有效的数值形式，则转换为数值再应用改变。变量类型从字符串变成数值。
+ 对于字符串，如果不是有效的数值形式，则将变量的值设置为NaN 。变量类型从字符串变成
+数值。
+ 对于布尔值，如果是false，则转换为0 再应用改变。变量类型从布尔值变成数值。
+ 对于布尔值，如果是true，则转换为1 再应用改变。变量类型从布尔值变成数值。
+ 对于浮点值，加1 或减1。
+ 如果是对象，则调用其（第5 章会详细介绍的）valueOf()方法取得可以操作的值。对得到的
+值应用上述规则。如果是NaN，则调用toString()并再次应用其他规则。变量类型从对象变成
+数值
+```
+
+```js
+let s1 = "2";
+let s2 = "z";
+let b = false;
+let f = 1.1;
+let o = {
+    valueOf() {
+    	return -1;
+    }
+};
+s1++; // 值变成数值3
+s2++; // 值变成NaN
+b++; // 值变成数值1
+f--; // 值变成0.10000000000000009（因为浮点数不精确）
+o--; // 值变成-2
+```
+
+#### 一元+ -
+
+如果将一元加应用到非数值，则会执行与使用Number()转型函数一样的类型转换：布尔值false
+和true 转换为0 和1，字符串根据特殊规则进行解析，对象会调用它们的valueOf()和/或toString()
+方法以得到可以转换的值。
+
+对数值使用一元减会将其变成相应的负值（如上面的例子所示）。在应用到非数值时，一元减会遵
+循与一元加同样的规则，先对它们进行转换，然后再取负值：
+
+```js
+let s1 = "01";
+let s2 = "1.1";
+let s3 = "z";
+let b = false;
+let f = 1.1;
+let o = {
+    valueOf() {
+    	return -1;
+    }
+};
+if(+){
+	s1 = +s1; // 值变成数值1
+    s2 = +s2; // 值变成数值1.1
+    s3 = +s3; // 值变成NaN
+    b = +b; // 值变成数值0
+    f = +f; // 不变，还是1.1
+    o = +o; // 值变成数值-1
+}else{
+    s1 = -s1; // 值变成数值-1
+    s2 = -s2; // 值变成数值-1.1
+    s3 = -s3; // 值变成NaN
+    b = -b; // 值变成数值0
+    f = -f; // 变成-1.1
+    o = -o; // 值变成数值1
+}
+```
+
+### 3.5.2 位操作符
+
+ECMAScript中的所有数值都以IEEE 754 64 位格式存储，但位操作并不直接应用到64 位表示，而是先把值转换为32 位整数，再进行位操作，之后再把结果转换为64 位。对开发者而言，只需要考虑32 位整数即可。
+
+负数是补码形式存储，绝对值二进制->取反码->+1
+
+**在32和64位之间转换时，NaN和Infinity会被当成0处理**
+
+位操作符应用到非数值，那么首先会使用Number()函数将该值转换为数值（这个过程是自动的），然后再应用位操作。最终结果是数值。
+
+按位非~       按位与&     按位或|      按位异或^       
+
+按位左移<<（空位补0）
+
+按位右移>> （左空位补符号值 正0,负1）
+
+无符号右移>>> （左补0）
+
+### 3.5.3布尔操作符
+
+#### 逻辑非 !
+
+```
+ 如果操作数是对象，则返回false。
+ 如果操作数是空字符串，则返回true。
+ 如果操作数是非空字符串，则返回false。
+ 如果操作数是数值0，则返回true。
+ 如果操作数是非0 数值（包括Infinity），则返回false。
+ 如果操作数是null，则返回true。
+ 如果操作数是NaN，则返回true。
+ 如果操作数是undefined，则返回true。
+```
+
+#### 逻辑与 &&
+
+```
+ 如果第一个操作数是对象，则返回第二个操作数。
+ 如果第二个操作数是对象，则只有第一个操作数求值为true 才会返回该对象。
+ 如果两个操作数都是对象，则返回第二个操作数。
+ 如果有一个操作数是null，则返回null。
+ 如果有一个操作数是NaN，则返回NaN。
+ 如果有一个操作数是undefined，则返回undefined。
+如果是null && NaN && undefined 则按左右顺序返回！！第一个值！！
+```
+
+逻辑与操作符是一种短路操作符，意思就是如果第一个操作数false，那么永远不会对第二个
+操作数求值（即使第二个操作数未定义或者执行报错）。
+
+#### 逻辑或 ||
+
+```
+ 如果第一个操作数是对象，则返回第一个操作数。
+ 如果第一个操作数求值为false，则返回第二个操作数。
+ 如果两个操作数都是对象，则返回第一个操作数。
+ 如果两个操作数都是null，则返回null。
+ 如果两个操作数都是NaN，则返回NaN。
+ 如果两个操作数都是undefined，则返回undefined。
+如果是null || NaN || undefined 则按左右顺序返回！！最后一个值！！
+```
+
+逻辑或操作符是一种短路操作符，意思就是如果第一个操作数true，那么永远不会对第二个
+操作数求值。
+
+=>赋值的简写
+
+```js
+let myObject = preferredObject || backupObject;
+```
+
+### 3.5.4乘性操作符
+
+操作数如果不是Number会被Number()转换（空字符串是0）
+
+#### 乘法*
+
+```
+ 如果操作数都是数值，则执行常规的乘法运算，即两个正值相乘是正值，两个负值相乘也是正值，正负符号不同的值相乘得到负值。如果ECMAScript 不能表示乘积，则返回Infinity 或-Infinity。
+ 如果是Infinity 乘以0，则返回NaN。
+ 如果是Infinity 乘以非0 的有限数值，则根据第二个操作数的符号返回Infinity 或-Infinity。
+ 如果是Infinity 乘以Infinity，则返回Infinity。
+ 如果有不是数值的操作数，则先在后台用Number()将其转换为数值，然后再应用上述规则。
+ 如果有任一操作数是NaN，则返回NaN。
+```
+
+#### 除法/
+
+```
+ 如果操作数都是数值，则执行常规的除法运算，即两个正值相除是正值，两个负值相除也是正值，符号不同的值相除得到负值。如果ECMAScript不能表示商，则返回Infinity 或-Infinity。
+ 如果有任一操作数是NaN，则返回NaN。
+ 如果是Infinity 除以Infinity，则返回NaN。
+ 如果是0 除以0，则返回NaN。
+ 如果是非0 的有限值除以0，则根据第一个操作数的符号返回Infinity 或-Infinity。
+ 如果是Infinity 除以任何数值，则根据第二个操作数的符号返回Infinity 或-Infinity。
+ 如果有不是数值的操作数，则先在后台用Number()函数将其转换为数值，然后再应用上述规则。
+```
+
+#### 取模%
+
+```
+ 如果操作数是数值，则执行常规除法运算，返回余数。
+ 如果被除数是无限值，除数是有限值，则返回NaN。
+ 如果被除数是有限值，除数是0，则返回NaN。
+ 如果是Infinity 除以Infinity，则返回NaN。
+ 如果被除数是有限值，除数是无限值，则返回被除数。
+ 如果被除数是0，除数不是0，则返回0。
+ 如果有不是数值的操作数，则先在后台用Number()函数将其转换为数值，然后再应用上述规则。
+```
+
+### 3.5.5指数操作符
+
+Math.pow(a,b)  
+
+ES7 => a**b
+
+**指数赋值**
+
+```js
+let a = 3; a **=2 
+console.log(a) //9
+let b = 16; b**=0.5
+console.log(b) //4
+```
+
+### 3.5.6加性操作符
+
+#### 加法+
+
+如果两个操作数都是数值，加法操作符执行加法运算并根据如下规则返回结果：
+
+```
+ 如果有任一操作数是NaN，则返回NaN；
+ 如果是Infinity 加Infinity，则返回Infinity；
+ 如果是-Infinity 加-Infinity，则返回-Infinity；
+ 如果是Infinity 加-Infinity，则返回NaN；
+ 如果是+0 加+0，则返回+0；
+ 如果是-0 加+0，则返回+0；
+ 如果是-0 加-0，则返回-0。
+```
+
+不过，如果有一个操作数是字符串，则要应用如下规则：
+
+```
+ 如果两个操作数都是字符串，则将第二个字符串拼接到第一个字符串后面；
+ 如果只有一个操作数是字符串，则将另一个操作数转换为字符串，再将两个字符串拼接在一起。
+```
+
+**如果有任一操作数是对象、数值或布尔值，则调用它们的toString()方法以获取字符串，然后再应用前面的关于字符串的规则。**
+
+**对于undefined 和null，则调用String()函数，分别获取"undefined"和"null"。**
+
+```js
+let result1 = 5 + 5; // 两个数值
+console.log(result1); // 10
+let result2 = 5 + "5"; // 一个数值和一个字符串
+console.log(result2); // "55"
+```
+
+```js
+let num1 = 5;
+let num2 = 10;
+let message = "The sum of 5 and 10 is " + num1 + num2;
+console.log(message); // "The sum of 5 and 10 is 510"
+let num1 = 5;
+let num2 = 10;
+let message = "The sum of 5 and 10 is " + (num1 + num2);
+console.log(message); // "The sum of 5 and 10 is 15"
+```
+
+#### 减法-
+
+```
+ 如果两个操作数都是数值，则执行数学减法运算并返回结果。
+ 如果有任一操作数是NaN，则返回NaN。
+ 如果是Infinity 减Infinity，则返回NaN。
+ 如果是-Infinity 减-Infinity，则返回NaN。
+ 如果是Infinity 减-Infinity，则返回Infinity。
+ 如果是-Infinity 减Infinity，则返回-Infinity。
+ 如果是+0 减+0，则返回+0。
+ 如果是+0 减-0，则返回-0。
+ 如果是-0 减-0，则返回+0。
+ 如果有任一操作数是字符串、布尔值、null 或undefined，则先在后台使用Number()将其转换为数值，然后再根据前面的规则执行数学运算。如果转换结果是NaN，则减法计算的结果是NaN。
+(null转换0，undefined转换NaN)
+ 如果有任一操作数是对象，则调用其valueOf()方法取得表示它的数值。如果该值是NaN，则减法计算的结果是NaN。如果对象没有valueOf()方法，则调用其toString()方法，然后再将得到的字符串转换为数值。
+```
+
+### 3.5.7关系操作符
+
+```
+>、<、<=、>=     都返回布尔值
+```
+
+```
+ 如果操作数都是数值，则执行数值比较。
+ 如果操作数都是字符串，则逐个比较字符串中对应字符的编码。
+ 如果有任一操作数是数值，则将另一个操作数转换为数值，执行数值比较。
+ 如果有任一操作数是对象，则调用其valueOf()方法，取得结果后再根据前面的规则执行比较。如果没有valueOf()操作符，则调用toString()方法，取得结果后再根据前面的规则执行比较。
+ 如果有任一操作数是布尔值，则将其转换为数值再执行比较。
+```
+
+```js 
+let result = "Brick" < "alphabet"; // true
+let result = "Brick".toLowerCase() < "alphabet".toLowerCase(); // false
+let result = "23" < "3"; // true
+let result = "23" < 3; // false
+let result = "a" < 3; // 因为"a"会转换为NaN，所以结果是false
+let result1 = NaN < 3; // false
+let result2 = NaN >= 3; // false
+```
+
+### 3.5.8相等操作符
+
+#### 等于==和不等于!=
+
+这两个操作符都会先进行**类型转换**（通常称为强制类型转换）再确定操作数是否相等。
+
+```
+ 如果任一操作数是布尔值，则将其转换为数值再比较是否相等。false 转换为0，true 转换为1。
+ 如果一个操作数是字符串，另一个操作数是数值，则尝试将字符串转换为数值，再比较是否相等。
+ 如果一个操作数是对象，另一个操作数不是，则调用对象的valueOf()方法取得其原始值，再根据前面的规则进行比较。
+```
+
+在进行比较时，这两个操作符会遵循如下规则。
+
+```
+ null 和undefined 相等。
+ null 和undefined 不能转换为其他类型的值再进行比较。
+ 如果有任一操作数是NaN，则相等操作符返回false，不相等操作符返回true。记住：即使两个操作数都是NaN，相等操作符也返回false，因为按照规则，NaN 不等于NaN。
+ 如果两个操作数都是对象，则比较它们是不是！同一个对象！。如果两个操作数都指向同一个对象，则相等操作符返回true。否则，两者不相等。
+```
+
+```js
+ null == undefined //true
+"NaN" == NaN       //"NaN"被Number转换为NaN,NaN不等于NaN false
+5 == NaN           //false
+NaN == NaN         //false
+NaN != NaN         //true
+false == 0         //true
+true == 1          //true
+true == 2          //false
+undefined == 0     //false
+null == 0          //false
+"5" == 5           //true
+```
+
+#### 全等===和不全等!==
+
+不转换的情况下相等
+
+对象得是指向同一个对象，全等
+
+### 3.5.9条件操作符
+
+```js
+variable = boolean_expression ? true_value : false_value;
+```
+
+### 3.5.10赋值操作符
+
+```
+每个数学操作符以及其他一些操作符都有对应的复合赋值操作符：
+ 乘后赋值（*=）
+ 除后赋值（/=）
+ 取模后赋值（%=）
+ 加后赋值（+=）
+ 减后赋值（-=）
+ 左移后赋值（<<=）
+ 右移后赋值（>>=）
+ 无符号右移后赋值（>>>=）
+这些操作符仅仅是简写语法，使用它们不会提升性能
+```
+
+### 3.5.11逗号操作符
+
+```js
+let num1 = 1, num2 = 2, num3 = 3;
+let num = (5, 1, 4, 8, 0); // num 的值为0
+```
+
+## 3.6语句
+
+### 3.6.1 if-else if-else
+
+```js
+if (condition1) statement1 else if (condition2) statement2 else statement3
+```
+
+### 3.6.2 do-while
+
+do-while 语句是一种后测试循环语句，即循环体中的代码执行后才会对退出条件进行求值。换句话说，循环体内的代码**至少执行一次**。
+
+```js
+do {
+	statement
+} while (expression);
+```
+
+### 3.6.3 while
+
+while 语句是一种先测试循环语句，即先检测退出条件，再执行循环体内的代码。因此，while 循环体内的代码有**可能不会执行**。
+
+```js
+while(expression) statement
+```
+
+### 3.6.4 for
+
+for 语句也是先测试语句，只不过增加了进入循环之前的初始化代码，以及循环执行后要执行的表达式
+
+无法通过while 循环实现的逻辑，同样也无法使用for 循环实现。因此for 循环只是将循环相关的代码封装在了一起而已
+
+```js 
+for (initialization; expression; post-loop-expression) statement
+```
+
+```js
+//无限循环
+for(;;){
+	doSomething()
+}
+```
+
+### 3.6.5 for-in
+
+for-in 语句是一种严格的迭代语句，用于枚举对象中的**非符号键**属性
+
+```js
+for (propertyName in expression) statement
+```
+
+ECMAScript 中对象的属性是无序的，因此for-in 语句不能保证返回对象属性的顺序。换句话说，所有可枚举的属性都会返回一次，但返回的顺序可能会因浏览器而异。
+
+如果for-in 循环要迭代的变量是null 或undefined，则不执行循环体。
+
+### 3.6.6 for-of
+
+for-of 语句是一种严格的迭代语句，用于遍历可迭代对象的元素
+
+```js
+for (property of expression) statement
+```
+
+在这个例子中，我们使用for-of 语句显示了一个包含4 个元素的数组中的所有元素。循环会一直持续到将所有元素都迭代完。与for 循环一样，这里控制语句中的const 也不是必需的。但为了确保这个局部变量不被修改，推荐使用const。
+for-of 循环会**按照可迭代对象的next()方法产生值的顺序**迭代元素。
+
+ES2018 对for-of 语句进行了扩展，增加了for-await-of 循环，以支持生成期约（promise）的异步可迭代对象。
+
+### 3.6.7 标签语句
+
+```js
+label: statement
+```
+
+可以在后面通过break 或continue 语句引用。标签语句的典型应用场景是嵌套循环。
+
+### 3.6.8 break和continue
+
+break 和continue 语句为执行循环代码提供了更严格的控制手段。其中，break 语句用于立即退出循环，强制执行循环后的下一条语句。而continue 语句也用于立即退出循环，但会再次从循环顶部开始执行。
+
+break 和continue 都可以与标签语句一起使用，返回代码中特定的位置
+
+### 3.6.9 with
+
+with 语句的用途是将代码作用域设置为特定的对象
+
+```js
+with (expression) statement;
+```
+
+```js
+with(location) {
+    let qs = search.substring(1);
+    let hostName = hostname;
+    let url = href;
+}
+// 可以视作等价为
+let qs = location.search.substring(1);
+let hostName = location.hostname;
+let url = location.href;
+```
+
+这里，with 语句用于连接location 对象。这意味着在这个语句内部，每个变量首先会被认为是一个局部变量。如果没有找到该局部变量，则会搜索location 对象，看它是否有一个同名的属性。如果有，则该变量会被求值为location 对象的属性。
+**严格模式不允许使用with 语句，否则会抛出错误。**
+
+### 3.6.10 switch
+
+在ECMAScript中switch语句可以用于所有数据类型，case的值不需要是常量，可以是变量或者表达式
+
+```js
+let num = 25;
+switch (true) {
+    case num < 0:
+        console.log("Less than 0.");
+        break;
+    case num >= 0 && num <= 10:
+        console.log("Between 0 and 10.");
+        break;
+    case num > 10 && num <= 20:
+        console.log("Between 10 and 20.");
+        break;
+    default:
+    	console.log("More than 20.");
+}
+```
+
+**switch 语句在比较每个条件的值时会使用全等操作符，因此不会强制转换数据类型（比如，字符串"10"不等于数值10）。**
+
+## 3.7函数
+
+ECMAScript 中的函数不需要指定是否返回值。任何函数在任何时间都可以使用return 语句来返回函数的值，用法是后跟要返回的值。
+
+**不指定返回值的函数实际上会返回特殊值undefined。**
+
+严格模式对函数也有一些限制：
+ **函数不能以eval 或arguments 作为名称；**
+ **函数的参数不能叫eval 或arguments；**
+ **两个命名参数不能拥有同一个名称。**
+如果违反上述规则，则会导致语法错误，代码也不会执行。
+
+# 4.变量、作用域与内存
+
+## 4.1原始值与引用值
+
+在把一个值赋给变量时，JavaScript 引擎必须确定这个值是原始值还是引用值。
+
+### 4.1.1动态属性
+
+只有引用值可以动态添加后面可以使用的属性
+
+原始值不能有属性（尽管给原始值添加属性不会报错，但是访问的时候undefined）
+
+### 4.1.2复制值
+
+除了存储方式不同，原始值和引用值在通过变量复制时也有所不同。
+
+在通过变量把一个原始值赋值到另一个变量时，原始值会被复制到新变量的位置。
+
+在把引用值从一个变量赋给另一个变量时，存储在变量中的值也会被复制到新变量所在的位置。区别在于，这里复制的值实际上是一个指针，它指向存储在堆内存中的对象。操作完成后，两个变量实际上指向同一个对象。
+
+### 4.1.3传递参数
+
+
 
 
 
