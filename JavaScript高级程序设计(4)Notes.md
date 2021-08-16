@@ -1296,7 +1296,321 @@ ECMAScript 中的函数不需要指定是否返回值。任何函数在任何时
 
 ### 4.1.3传递参数
 
+ECMAScript 中所有函数的参数都是按值传递的。
 
+原始值就是原始值的copy,引用类型传递的是指针
+
+```js
+function setName(obj) {
+    obj.name = "Nicholas";
+    obj = new Object();
+    obj.name = "Greg";
+}
+let person = new Object();
+setName(person);
+console.log(person.name); // "Nicholas"
+```
+
+**typeof在检测正则时会返回function(在Safari和Chrome中)**
+
+**IE和Firefox则是正常的Object**
+
+## 4.2执行上下文与作用域
+
+变量或函数的上下文决定了它们可以访问哪些数据，以及它们的行为。每个上下文都有一个关联的**变量对象**，而这个上下文中定义的所有变量和函数都存在于这个对象上。
+
+上下文在其所有代码都执行完毕后会被销毁，包括定义在它上面的所有变量和函数（全局上下文在应用程序退出前才会被销毁，比如关闭网页或退出浏览器）。
+
+每个函数调用都有自己的上下文。当代码执行流进入函数时，函数的上下文被推到一个上下文栈上。在函数执行完之后，上下文栈会弹出该函数上下文，将控制权返还给之前的执行上下文。ECMAScript程序的执行流就是通过这个上下文栈进行控制的。
+
+上下文中的代码在执行的时候，会创建变量对象的一个**作用域链**。这个作用域链决定了各级上下文中的代码在访问变量和函数时的顺序。代码正在执行的上下文的变量对象始终位于作用域链的最前端。如果上下文是函数，则其**活动对象**用作变量对象。活动对象最初只有一个定义变量：arguments。（全局上下文中没有这个变量。）作用域链中的下一个变量对象来自包含上下文，再下一个对象来自再下一个包含上下文。以此类推直至全局上下文；全局上下文的变量对象始终是作用域链的最后一个变量对象。
+
+代码执行时的标识符解析是通过**沿作用域链逐级搜索标识符名称**完成的。搜索过程始终从作用域链的最前端开始，然后逐级往后，直到找到标识符。（如果没有找到标识符，那么通常会报错。）
+
+```js
+var color = "blue";
+function changeColor() {
+    let anotherColor = "red";
+    function swapColors() {
+        let tempColor = anotherColor;
+        anotherColor = color;
+        color = tempColor;
+        // 这里可以访问color、anotherColor 和tempColor
+    }
+    // 这里可以访问color 和anotherColor，但访问不到tempColor
+    swapColors();
+}
+// 这里只能访问color
+changeColor();
+```
+
+### 4.2.1作用域链增强
+
+虽然执行上下文主要有全局上下文和函数上下文两种（eval()调用内部存在第三种上下文），但有其他方式来增强作用域链。某些语句会导致在**作用域链前端临时添加**一个上下文，这个上下文在代码执行后会被删除。通常在两种情况下会出现这个现象，即代码执行到下面任意一种情况时：
+ try/catch 语句的catch 块
+ with 语句
+
+### 4.2.2变量声明
+
+#### var
+
+在使用var 声明变量时，变量会被自动添加到最接近的上下文。在函数中，最接近的上下文就是函数的局部上下文。在with 语句中，最接近的上下文也是函数上下文。如果变量未经声明就被初始化了，那么它就会自动被添加到全局上下文。
+
+```js
+function add(num1, num2) {
+    var sum = num1 + num2;
+    return sum;
+}
+let result = add(10, 20); // 30
+console.log(sum); // 报错：sum 在这里不是有效变量
+
+function add(num1, num2) {
+    sum = num1 + num2;
+    return sum;
+}
+let result = add(10, 20); // 30
+console.log(sum); // 30
+```
+
+var 声明会被拿到函数或全局作用域的顶部，位于作用域中所有代码之前。这个现象叫作“提升”
+
+#### let
+
+ES6 新增的let 关键字跟var 很相似，但它的作用域是块级的，这也是JavaScript 中的新概念。块级作用域由最近的一对包含花括号{}界定。换句话说，if 块、while 块、function 块，甚至连单独的块也是let 声明变量的作用域。
+
+```js
+{let c = 'a'}
+console.log(c)//VM134:1 Uncaught ReferenceError: c is not defined
+```
+
+let 与var 的另一个不同之处是在同一作用域内不能声明两次。重复的var 声明会被忽略，而重复的let 声明会抛出SyntaxError。
+
+#### const
+
+使用const 声明的变量必须同时初始化为某个值。一经声明，在其生命周期的任何时候都不能再重新赋予新值。
+
+const 声明只应用到顶级原语或者对象。换句话说，赋值为对象的const 变量不能再被重新赋值为其他引用值，但对象的键则不受限制。
+
+如果想让整个对象都不能修改，可以使用Object.freeze()，这样再给属性赋值时虽然不会报错，但会静默失败：
+
+#### 标识符查找
+
+当在特定上下文中为读取或写入而引用一个标识符时，必须通过搜索确定这个标识符表示什么。搜索开始于作用域链前端，以给定的名称搜索对应的标识符。如果在局部上下文中找到该标识符，则搜索停止，变量确定；如果没有找到变量名，则继续沿作用域链搜索。（注意，作用域链中的对象也有一个原型链，因此搜索可能涉及每个对象的原型链。）这个过程一直持续到搜索至全局上下文的变量对象。如果仍然没有找到标识符，则说明其未声明。
+
+```js
+var color = 'blue';
+function getColor() {
+	return color;
+}
+console.log(getColor()); // 'blue'
+```
+
+如果**局部上下文中有**一个同名的标识符，那就**不能在该上下文中引用父**上下文中的同名标识符
+
+```js
+var color = 'blue';
+function getColor() {
+    let color = 'red';
+    return color;
+}
+console.log(getColor()); // 'red'
+```
+
+使用块级作用域声明并不会改变搜索流程，但可以给词法层级**添加额外的层次**：
+
+```js
+var color = 'blue';
+function getColor() {
+let color = 'red';
+    {
+        let color = 'green';
+        return color;
+    }
+}
+console.log(getColor()); // 'green'
+```
+
+在局部变量color 声明之后的任何代码都无法访问全局变量color，除非使用完全限定的写法window.color。
+
+## 4.3垃圾回收
+
+执行环境负责在代码执行时管理内存。
+
+基本思路很简单：确定哪个变量不会再使用，然后释放它占用的内存。这个过程是周期性的，即垃圾回收程序每隔一定时间（或者说在代码执行过程中某个预定的收集时间）就会自动运行。
+
+在浏览器的发展史上，用到过两种主要的标记策略：**标记清理**和**引用计数**。
+
+### 4.3.1标记清理(最常用)
+
+当变量进入上下文，比如在函数内部声明一个变量时，这个变量会被加上存在于上下文中的标记。而在上下文中的变量，逻辑上讲，永远不应该释放它们的内存，因为只要上下文中的代码在运行，就有可能用到它们。当变量离开上下文时，也会被加上离开上下文的标记。
+
+垃圾回收程序运行的时候，会标记内存中存储的所有变量（记住，标记方法有很多种）。然后，它会将所有在上下文中的变量，以及被在上下文中的变量引用的变量的标记去掉。在此之后再被加上标记的变量就是待删除的了，原因是任何在上下文中的变量都访问不到它们了。随后垃圾回收程序做一次内存清理，销毁带标记的所有值并收回它们的内存。
+
+### 4.3.2引用计数
+
+每个值都记录它被引用的次数。声明变量并给它赋一个引用值时，这个值的引用数为1。如果同一个值又被赋给另一个变量，那么引用数加1。类似地，如果保存对该值引用的变量被其他值给覆盖了，那么引用数减1。当一个值的引用数为0 时，就说明没办法再访问到这个值了，因此可以安全地收回其内存了。垃圾回收程序下次运行的时候就会释放引用数为0 的值的内存。
+
+严重的问题：**循环引用**。所谓循环引用，就是对象A 有一个指针指向对象B，而对象B 也引用了对象A。
+
+```js
+function problem() {
+    let objectA = new Object();
+    let objectB = new Object();
+    objectA.someOtherObject = objectB;
+    objectB.anotherObject = objectA;
+}
+```
+
+一种解决办法就是设为null
+
+### 4.3.3性能
+
+垃圾回收程序会周期性运行，如果内存中分配了很多变量，则可能造成性能损失，因此垃圾回收的时间调度很重要。尤其是在内存有限的移动设备上，垃圾回收有可能会明显拖慢渲染的速度和帧速率。
+
+在某些浏览器中是有可能（但不推荐）主动触发垃圾回收的。在IE 中，window.CollectGarbage()方法会立即触发垃圾回收。在Opera 7 及更高版本中，调用window.opera.collect()也会启动垃圾回收程序。
+
+### 4.3.4内存管理
+
+将内存占用量保持在一个较小的值可以让页面性能更好。优化内存占用的最佳手段就是保证在执行代码时只保存必要的数据。如果数据不再必要，那么把它设置为null，从而释放其引用。这也可以叫作**解除引用**。这个建议最适合全局变量和全局对象的属性。局部变量在超出作用域后会被自动解除引用
+
+```js
+function createPerson(name){
+    let localPerson = new Object();
+    localPerson.name = name;
+    return localPerson;
+}
+let globalPerson = createPerson("Nicholas");
+// 解除globalPerson 对值的引用
+globalPerson = null;
+```
+
+解除对一个值的引用**并不会自动导致相关内存被回收**。解除引用的关键在于确保相关的值已经不在上下文里了，因此它**在下次垃圾回收时会被回收**。
+
+##### ①通过const和let声明提升性能
+
+在块作用域比函数作用域更早终止的情况下，就有可能更早地让垃圾回收程序介入
+
+##### ②隐藏类和删除操作
+
+运行期间，V8 会将创建的对象与隐藏类关联起来，以跟踪它们的属性特征。能够共享相同隐藏类的对象性能会更好，V8 会针对这种情况进行优化，但不一定总能够做到。比如
+
+```js
+function Article() {
+	this.title = 'Inauguration Ceremony Features Kazoo Band';
+}
+let a1 = new Article();
+let a2 = new Article();
+```
+
+V8 会在后台配置，让这两个类实例共享相同的隐藏类，因为这两个实例共享同一个构造函数和原型。假设之后又添加了下面这行代码：
+
+```js
+a2.author = 'Jake';
+```
+
+此时两个Article 实例就会对应两个不同的隐藏类。根据这种操作的频率和隐藏类的大小，这有可能对性能产生明显影响。
+
+当然，解决方案就是避免JavaScript 的“先创建再补充”（ready-fire-aim）式的动态属性赋值，并在构造函数中一次性声明所有属性，如下所示：
+
+```js
+function Article(opt_author) {
+    this.title = 'Inauguration Ceremony Features Kazoo Band';
+    this.author = opt_author;
+}
+let a1 = new Article();
+let a2 = new Article('Jake');
+```
+
+这样，两个实例基本上就一样了（不考虑hasOwnProperty 的返回值），因此可以共享一个隐藏类，从而带来潜在的性能提升.
+
+但是使用delete关键字会导致生成相同的隐藏类片段
+
+```js
+function Article() {
+    this.title = 'Inauguration Ceremony Features Kazoo Band';
+    this.author = 'Jake';
+}
+let a1 = new Article();
+let a2 = new Article();
+delete a1.author;
+```
+
+在代码结束后，即使两个实例使用了同一个构造函数，它们也不再共享一个隐藏类。动态删除属性与动态添加属性导致的后果一样。最佳实践是**把不想要的属性设置为null**,代替delete。
+
+##### ③内存泄漏
+
+JavaScript 中的内存泄漏大部分是由不合理的引用导致的。
+
+**意外声明全局变量是最常见但也最容易修复的内存泄漏问题。**
+
+```js
+function setName() {
+	name = 'Jake';
+}
+```
+
+window不被清理，name就不会消失
+
+**定时器也可能会悄悄地导致内存泄漏。比如定时器的回调通过闭包引用了外部变量**：
+
+```js
+let name = 'Jake';
+setInterval(() => {
+	console.log(name);
+}, 100);
+```
+
+定时器一直运行，name就会一直占用内存
+
+**使用JavaScript 闭包很容易在不知不觉间造成内存泄漏。**
+
+```js
+let outer = function() {
+    let name = 'Jake';
+    return function() {
+    	return name;
+	};
+};
+```
+
+只要返回的函数存在就不能清理name
+
+##### ④静态分配与对象池
+
+开发者无法直接控制什么时候开始收集垃圾，但可以间接控制触发垃圾回收的条件。
+
+理论上，如果能够合理使用分配的内存，同时避免多余的垃圾回收，那就可以保住因释放内存而损失的性能。
+
+**不要动态创建对象**
+
+初始化的时候创建对象池，来管理一组可回收的对象，应用程序可以向对象池请求对象设置属性，操作完成后再返回给对象池。由于没发生对象初始化，垃圾回收探测就不会发现有对象更替，垃圾回收程序就不会那么频繁地运行
+
+以下是一个对象池的伪实现：
+
+```js
+// vectorPool 是已有的对象池
+let v1 = vectorPool.allocate();
+let v2 = vectorPool.allocate();
+let v3 = vectorPool.allocate();
+v1.x = 10;
+v1.y = 5;
+v2.x = -3;
+v2.y = -6;
+addVector(v1, v2, v3);
+console.log([v3.x, v3.y]); // [7, -1]
+vectorPool.free(v1);
+vectorPool.free(v2);
+vectorPool.free(v3);
+// 如果对象有属性引用了其他对象
+// 则这里也需要把这些属性设置为null
+v1 = null;
+v2 = null;
+v3 = null;
+```
+
+**静态分配(极端不考虑)**
+
+# 5.基本引用类型
 
 
 
