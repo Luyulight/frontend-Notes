@@ -822,3 +822,7 @@ i大小写不敏感,g全局匹配,m多行匹配,
 9.JSON.stringify
 
 10.JS的隐式转换
+
+11.call,apply,bind的区别
+
+bind返回的是原函数的一个拷贝
