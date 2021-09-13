@@ -564,3 +564,11 @@ reflow必然触发repaint
 7.filter:blur(0) 模糊度0
 
 8.position:absolute 负值定位到页面外面
+
+
+
+
+
+8.background-size:cover,contain,100%,auto的区别
+
+https://www.w3school.com.cn/tiy/c.asp?f=css_background-size&p=7

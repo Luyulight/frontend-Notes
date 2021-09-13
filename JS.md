@@ -825,4 +825,14 @@ i大小写不敏感,g全局匹配,m多行匹配,
 
 11.call,apply,bind的区别
 
+https://www.bilibili.com/read/cv6233347
+
 bind返回的是原函数的一个拷贝
+
+12.类
+
+https://www.bilibili.com/read/cv13110696
+
+13.一些object.prototype方法的手写
+
+https://www.bilibili.com/read/cv12484729?from=articleDetail
