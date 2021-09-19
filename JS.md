@@ -829,6 +829,18 @@ https://www.bilibili.com/read/cv6233347
 
 bind返回的是原函数的一个拷贝
 
+```js
+const $ = document.querySelector.bind(document)
+```
+
+深入理解bind
+
+https://www.smashingmagazine.com/2014/01/understanding-javascript-function-prototype-bind/
+
+默认情况下[`setTimeout()`](https://developer.mozilla.org/en-US/docs/Web/API/setTimeout)，`this`关键字将设置为 [`window`](https://developer.mozilla.org/en-US/docs/Web/API/Window)（或`global`）对象。当使用需要`this`引用类实例的类方法时，您可以显式绑定 `this`到回调函数，以维护实例。
+
+
+
 12.类
 
 https://www.bilibili.com/read/cv13110696
@@ -836,3 +848,8 @@ https://www.bilibili.com/read/cv13110696
 13.一些object.prototype方法的手写
 
 https://www.bilibili.com/read/cv12484729?from=articleDetail
+
+14.array.prototype.flat
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array/flat
+
