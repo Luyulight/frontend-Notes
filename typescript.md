@@ -31,3 +31,47 @@ let digital = createClock(DigitalClock, 12, 17);
 let analog = createClock(AnalogClock, 7, 32);
 ```
 
+
+
+## 在泛型里使用类类型
+
+```typescript
+//简写
+class BeeKeeper {
+  hasMask: boolean;
+}
+
+class ZooKeeper {
+  nametag: string;
+}
+
+class Animal1 {
+  numLegs: number;
+}
+
+class Bee extends Animal1 {
+  keeper: BeeKeeper;
+}
+
+class Lion extends Animal1 {
+  keeper: ZooKeeper;
+}
+
+function createInstance<A extends Animal1>(c: new () => A): A {
+  return new c();
+}
+
+//这样是可以通过类型检查的
+createInstance(Lion).keeper.nametag;  // typechecks!
+createInstance(Bee).keeper.hasMask;   // typechecks!
+```
+
+```
+1.import {Context} from "midway"
+
+```
+
+```
+
+```
+
