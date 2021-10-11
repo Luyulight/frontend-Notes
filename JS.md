@@ -853,3 +853,34 @@ https://www.bilibili.com/read/cv12484729?from=articleDetail
 
 https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array/flat
 
+
+
+15.CommonJs模块化和ESModule模块化
+
+CommonJs中使用require()加载和module.exports输出
+
+```js
+const A  = require()
+const { a, b, c} = require() //相当于解构赋值
+// require相当于把require的模块当作大对象整体引入
+// 无法做treeShaking进行优化
+```
+
+```js
+exports.A = function(){}
+module.exports = {}
+//exports实际上是一个指向module.exports的变量， 
+//如果直接赋值exports只是会让exports不指向module.exports,并不会对导出有影响
+```
+
+ES6模块使用import和export
+
+```
+export default xxxx
+对应import A from xxx 或 import {default as A} from xxx
+
+export A 
+export B
+对应import {A,B} from xxx
+```
+

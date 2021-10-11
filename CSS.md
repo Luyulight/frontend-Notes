@@ -572,3 +572,13 @@ reflow必然触发repaint
 8.background-size:cover,contain,100%,auto的区别
 
 https://www.w3school.com.cn/tiy/c.asp?f=css_background-size&p=7
+
+
+
+
+
+9.Transform的 scale属性不能作用于 inline元素上，例如span
+
+并且动画 animation  也不能作用于inline元素上
+
+可以给span加display:inline-block;属性
