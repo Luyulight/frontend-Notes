@@ -90,9 +90,34 @@ class LoggingButton extends React.Component {
 
 在子组件中判断prop来决定return是不是null
 
-
+```
 
 ```
 
+3.react函数式组件中使用stateHook，子组件调用包含setState的function修改state但是并没有触发子组件的变化
+
+```js
+ const [categories, setCategories] = useState(tempData.categories)
+ const deleteCategroy = index => {
+    let temp = categories
+    temp.splice(index,1)
+    setCategories(temp)
+  }
+```
+
+错误在于let temp=categories实际上只是换了个指针，指向的内存中是同一个state的内存区域，并且直接修改了state变量。
+
+因为传入setState方法中的temp和state本身的categories变量是同一个，
+
+所以setState判定没有发生修改，所以不会发生后续的子组件的刷新
+
+正确的写法是
+
+```ts
+const deleteCategroy = index => {
+    let temp = [...categories]
+    temp.splice(index, 1)
+    setCategories(temp)
+  }
 ```
 

@@ -884,3 +884,27 @@ export B
 对应import {A,B} from xxx
 ```
 
+
+
+16.监听动画结束
+
+animationend事件
+
+`animationend` 事件会在一个 CSS 动画完成时触发（不包括完成前就已终止的情况，例如元素变得不可见或者动画从元素中移除）。
+
+
+
+同类事件有
+
+animationstart
+
+`animationstart` 事件会在 CSS 动画开始时触发。 如果有 `animation-delay` 延时，事件会在延迟时效过后立即触发。为负数的延时时长会致使事件被触发时事件的 `elapsedTime` 属性值等于该时长的绝对值（并且，相应地，动画将直接播放该时长绝对值之后的动画）。
+
+
+
+**`animationiteration`** 事件将被触发 当[CSS 动画](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations)的迭代结束且另一个迭代开始时。此事件不会与 [`animationend`](https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLElement/animationend_event) 事件同时发生t, 因此对于`animation-iteration-count`次数为1的动画不会发生。
+
+
+
+一个 `**animationcancel**` 事件会在一个 [CSS Animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations) 意外终止时触发. 换句话说, 就是任意时刻 CSS Animation 在没有发送 `animationend (en-US)` 事件时停止运行. 这种情况会在  [`animation-name`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/animation-name) 发生改变导致动画被移除时, 或者使用CSS隐藏了动画中的node节点. 因此要么node节点直接被隐藏，要么因为node节点的父节点被隐藏.
+
