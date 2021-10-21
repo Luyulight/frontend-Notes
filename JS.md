@@ -908,3 +908,9 @@ animationstart
 
 一个 `**animationcancel**` 事件会在一个 [CSS Animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations) 意外终止时触发. 换句话说, 就是任意时刻 CSS Animation 在没有发送 `animationend (en-US)` 事件时停止运行. 这种情况会在  [`animation-name`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/animation-name) 发生改变导致动画被移除时, 或者使用CSS隐藏了动画中的node节点. 因此要么node节点直接被隐藏，要么因为node节点的父节点被隐藏.
 
+
+
+17.RequestAnimationFrame和RequestIdleCallback
+
+https://www.cnblogs.com/cangqinglang/p/13877078.html
+
