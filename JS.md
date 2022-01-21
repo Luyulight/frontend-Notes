@@ -427,6 +427,24 @@ touchstart -> mouseover ->mousemove(一次) -> mousedown ->mouseup -> click -> t
 
 **手势事件：**gesturestart,gesturechange,gestureend
 
+#### 动画事件
+
+animationstart->animationend,
+
+animationiteration
+
+#### 过渡事件
+
+transitionend
+
+#### 图像事件
+
+onload,onerror
+
+#### 滚轮事件
+
+....
+
 ### 内存和性能：
 
 #### ①事件委托
@@ -914,3 +932,8 @@ animationstart
 
 https://www.cnblogs.com/cangqinglang/p/13877078.html
 
+
+
+18.div绑定键盘监听事件，
+
+div需要加tabIndex属性才能让整个div监听到键盘事件，否则只有在div中可以focus的位置比如input,textarea,button的位置才能监听到keydown

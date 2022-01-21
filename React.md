@@ -293,3 +293,212 @@ function App() {
 为什么不用state的形式直接set，因为那么做跑不过编译，原因的话有待一个深入的了解。
 
 总之，延迟加载大概的实现就是这么一个思路
+
+
+
+8
+
+basicLayout 主题内容与一个鉴权相关的状态
+
+9
+
+promise没有办法取消
+
+】
+
+SWR库，或者blue.,..重新定义promise
+
+## 10.state的更新原理
+
+如示例
+
+一个页面的layout中，一个groupState来管理左侧的菜单list
+
+一个checkedGroupState来管理选中的菜单的数据
+
+checkedGroupState的值是groupState数组的一个item。
+
+当使用useEffect触发groupState刷新后，checkedGroupState的对象中对应的属性也会被刷新
+
+## 11.modal的hack用法。
+
+```tsx
+export const AddUserModal:React.FC<{group:groupItem|undefined,callback:()=>void}> & {
+  show?:()=>void
+  hide?:()=>void
+}=({group,callback})=>{
+  const [modalShow, setmodalShow] = useState(false)
+  const [value, setvalue] = useState([])
+  const members = group?.members || []
+  useEffect(()=>{
+    AddUserModal.show = ()=>{
+      setmodalShow(true)
+    }
+    AddUserModal.hide = ()=>{
+      setmodalShow(false)
+    }
+  },[null])
+```
+
+仅适用于全局且唯一的模态框
+
+在第一次挂载的时候给AddUserModal的原型挂上show和hide方法，而在其他任意地方使用到模态框仅需要AddUserModal.show()即可
+
+### 12.在局部模块修改全局框架的样式
+
+比如在一个业务modal中，需要对antd的Radio.Group组件的disable的样式进行修改。
+
+如果在非模块化的普通业务中，我们只需要在当前页面的html/php/等的view文件中对样式进行覆写，比如：
+
+```css
+.ant-radio-button-wrapper.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-disabled {
+  background-color: #a3dbce !important;
+}
+```
+
+但是这种写法如果用到模块化的工程项目中，
+
+首先在less/sass/scss中我们写这样的样式，其实在打包过程中经过css-module的转化，每个.class都会被加上哈希串，比如
+
+```css
+._modal-body_96ap7_12 ._previewArea_96ap7_36 ._itemAuth_96ap7_40 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-bottom: 1px solid #e1dddd;
+    height: 2.5rem;
+    line-height: 2.5rem;
+}
+```
+
+所以一种想法就是把上述的css写到一个单独的css中，然后在对应的组件的tsx头部直接import进来
+
+```tsx
+import './additional.css'
+```
+
+但是这样的话实际上会造成全局的样式污染。
+
+我们还是应该统一写到less/sass/scss中
+
+但是要避免被加入哈希，所以去查了一下css-module的用法
+
+**CSS Modules 允许使用`:global(.className)`的语法，声明一个全局规则。凡是这样声明的`class`，都不会被编译成哈希字符串。**
+
+所以以上代码改成了
+
+```less
+:global(.ant-radio-button-wrapper.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-disabled) {
+  background-color: #a3dbce !important;
+}
+```
+
+加入到less中，但是这样其实还是会造成全局的样式污染。
+
+我们要做的是
+
+```tsx
+<Radio.Group
+	className={styles.myRadioGroup}
+/>
+```
+
+```less
+.myRadioGroup {
+    :global(.ant-radio-button-wrapper.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-disabled) {
+        background-color: #a3dbce;
+    }
+}
+```
+
+用一个自定义的className包裹我们要修改的全局框架的样式
+
+这样既能达到自定义的效果又不会污染全局的css
+
+
+
+## 13.做一个input删除的拦截，如果是{{x}}的data则整块删除
+
+```react
+const [value, setValue] = useState("{{abc}}{{def}}")
+
+    const deleteFilter = (e: React.KeyboardEvent) => {
+        const reg = /{{\w*}}/g
+        const tailReg = /{{\w*}}*$/
+        if (!tailReg.test(value)) {
+            return
+        }
+        if (e.key === "Backspace" || e.code === "Backspace") {
+            e.preventDefault()
+            let tempArr = value.match(reg)
+            if (!tempArr || tempArr.length == 0) {
+                return
+            }
+            let tailStr = tempArr[tempArr.length - 1]
+            let valueCop = value.substring(0, value.length - tailStr.length)
+            setValue(valueCop)
+        }
+    }
+```
+
+```tsx
+<input
+    value={value}
+    onChange={(e) => setValue(e.target.value)}
+    onKeyDown={(e) => deleteFilter(e)}
+></input>
+```
+
+## 14.多个组件的执行顺序
+
+#### 1. 父子组件
+
+- **挂载阶段**
+
+  分 **两个** 阶段：
+
+  - 第 **一** 阶段，由父组件开始执行到自身的 `render`，解析其下有哪些子组件需要渲染，并对其中 **同步的子组件** 进行创建，按 **递归顺序** 挨个执行各个子组件至 `render`，生成到父子组件对应的 Virtual DOM 树，并 commit 到 DOM。
+  - 第 **二** 阶段，此时 DOM 节点已经生成完毕，组件挂载完成，开始后续流程。先依次触发同步子组件各自的 `componentDidMount`，最后触发父组件的。
+
+**注意**：如果父组件中包含异步子组件，则会在父组件挂载完成后被创建。
+
+所以执行顺序是：
+
+父组件 getDerivedStateFromProps —> 同步子组件 getDerivedStateFromProps —> 同步子组件 componentDidMount —> 父组件 componentDidMount —> 异步子组件 getDerivedStateFromProps —> 异步子组件 componentDidMount
+
+- **更新阶段**
+
+  **React 的设计遵循单向数据流模型** ，也就是说，数据均是由父组件流向子组件。
+
+  ```
+  第 一 阶段，由父组件开始，执行
+  static getDerivedStateFromProps
+  shouldComponentUpdate
+  更新到自身的 `render`，解析其下有哪些子组件需要渲染，并对 **子组件** 进行创建，按 **递归顺序** 挨个执行各个子组件至 `render`，生成到父子组件对应的 Virtual DOM 树，并与已有的 Virtual DOM 树 比较，计算出 **Virtual DOM 真正变化的部分** ，并只针对该部分进行的原生DOM操作。
+  ```
+
+  ```
+  第 二 阶段，此时 DOM 节点已经生成完毕，组件挂载完成，开始后续流程。先依次触发同步子组件以下函数，最后触发父组件的。
+  getSnapshotBeforeUpdate()
+  componentDidUpdate()
+  
+  React 会按照上面的顺序依次执行这些函数，每个函数都是各个子组件的先执行，然后才是父组件的执行。
+  所以执行顺序是：
+  父组件 getDerivedStateFromProps —> 父组件 shouldComponentUpdate —> 子组件 getDerivedStateFromProps —> 子组件 shouldComponentUpdate —> 子组件 getSnapshotBeforeUpdate —>  父组件 getSnapshotBeforeUpdate —> 子组件 componentDidUpdate —> 父组件 componentDidUpdate
+  ```
+
+#### 2.兄弟组件
+
+- 挂载阶段
+
+  若是同步路由，它们的创建顺序和其在共同父组件中定义的先后顺序是 **一致** 的。
+
+  若是异步路由，它们的创建顺序和 js 加载完成的顺序一致。
+
+- 更新阶段、卸载阶段
+
+  兄弟节点之间的通信主要是经过父组件（Redux 和 Context 也是通过改变父组件传递下来的 `props` 实现的），**满足React 的设计遵循单向数据流模型**， **因此任何两个组件之间的通信，本质上都可以归结为父子组件更新的情况** 。
+
+  所以，兄弟组件更新、卸载阶段，请参考 **父子组件**。
