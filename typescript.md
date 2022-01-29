@@ -501,3 +501,84 @@ function changeKey<A, B>(
 }
 ```
 
+
+
+函数泛型
+
+```typescript
+function foo<T>(x: T): T { return x; }
+const foo = <T>(x: T) => x; // ERROR : unclosed `T` tag
+const foo = <T extends unknown>(x: T) => x;
+```
+
+```typescript
+//例如下面一个组件
+interface ITableTransferProps<T> extends TransferProps<T> {
+    leftColumns: TableColumnProps<T>[]
+    rightColumns: TableColumnProps<T>[]
+    dataSource: T[]
+}
+
+export const TableTransfer = <T extends TransferItem>({
+    leftColumns,
+    rightColumns,
+    dataSource,
+    ...restProps
+}: ITableTransferProps<T>) => (
+    <Transfer {...restProps}>
+        {({
+            direction,
+            filteredItems,
+            onItemSelect,
+            onItemSelectAll,
+            selectedKeys: listSelectedKeys,
+            disabled: listDisabled,
+        }) => {
+            const columns = direction === "left" ? leftColumns : rightColumns
+
+            const rowSelections: TableRowSelection<T> = {
+                getCheckboxProps: (item: CheckboxProps) => ({
+                    disabled: listDisabled || item.disabled,
+                }),
+                onSelectAll: (selected: boolean, selectedRows) => {
+                    const treeSelectedKeys = selectedRows
+                        .filter((item) => !item.disabled)
+                        .map(({ key }) => key)
+                    const diffKeys = selected
+                        ? difference(treeSelectedKeys, listSelectedKeys)
+                        : difference(listSelectedKeys, treeSelectedKeys)
+                    onItemSelectAll(
+                        diffKeys.map((key) => key || "").filter(Boolean),
+                        selected
+                    )
+                },
+                onSelect: ({ key }, selected: boolean) => {
+                    if (key) {
+                        onItemSelect(key, selected)
+                    }
+                },
+                selectedRowKeys: listSelectedKeys,
+            }
+
+            return (
+                <Table
+                    rowSelection={rowSelections}
+                    columns={columns}
+                    dataSource={filteredItems}
+                    size="small"
+                    style={{ pointerEvents: listDisabled ? "none" : undefined }}
+                    onRow={({ key, disbaled: itemDisabled }) => ({
+                        onClick: () => {
+                            if (itemDisabled || listDisabled || !key) {
+                                return
+                            }
+                            onItemSelect(key, !listSelectedKeys.includes(key))
+                        },
+                    })}
+                />
+            )
+        }}
+    </Transfer>
+)
+```
+
