@@ -419,7 +419,7 @@ import './additional.css'
 
 
 
-## 13.做一个input删除的拦截，如果是{{x}}的data则整块删除
+### 13.做一个input删除的拦截，如果是{{x}}的data则整块删除
 
 ```react
 const [value, setValue] = useState("{{abc}}{{def}}")
@@ -451,7 +451,7 @@ const [value, setValue] = useState("{{abc}}{{def}}")
 ></input>
 ```
 
-## 14.多个组件的执行顺序
+### 14.多个组件的执行顺序
 
 #### 1. 父子组件
 
@@ -502,3 +502,68 @@ const [value, setValue] = useState("{{abc}}{{def}}")
   兄弟节点之间的通信主要是经过父组件（Redux 和 Context 也是通过改变父组件传递下来的 `props` 实现的），**满足React 的设计遵循单向数据流模型**， **因此任何两个组件之间的通信，本质上都可以归结为父子组件更新的情况** 。
 
   所以，兄弟组件更新、卸载阶段，请参考 **父子组件**。
+
+### 15.事件处理过程中需要弹窗进行验证以进行后续操作
+
+通常我们能想到的是直接在代码中调用Modal.confirm()
+
+```jsx
+if (index > -1) {} else {
+    Modal.confirm({
+        title: "操作确认",
+        content: (
+            <div>
+                确定要把词条 [
+                <a
+                    href={`/term/${record.id}`}
+                    target="_blank"
+                >
+                    {record.name}
+                </a>)
+                ] 移动到 [
+                <a
+                    href={`/term/${parent.id}`}
+                    target="_blank"
+                >
+                    {parent.name}
+                </a>
+                ] 下吗?
+            </div>
+        ),
+        onOk: run,
+    })
+}
+```
+
+但是这样写的话在事件处理代码中不够优雅
+
+可以将调用Modal的部分代码封装到一个promise中
+
+如下
+
+```typescript
+import { ReactNode } from "react"
+import { Modal } from "antd"
+
+export function conditionalConfirm(
+    content: ReactNode | string,
+    condition: () => boolean
+) {
+    return new Promise((resolve, reject) => {
+        if (condition()) {
+            Modal.confirm({
+                content,
+                onOk: resolve,
+                onCancel: reject,
+            })
+        } else {
+            resolve("continue")
+        }
+    })
+}
+
+conditionalConfirm("",()=>true).then(()=>{
+    callback()
+})
+```
+
