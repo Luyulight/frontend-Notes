@@ -841,6 +841,7 @@ i大小写不敏感,g全局匹配,m多行匹配,
 
 10.JS的隐式转换
 
+<<<<<<< Updated upstream
 11.call,apply,bind的区别
 
 https://www.bilibili.com/read/cv6233347
@@ -937,3 +938,114 @@ https://www.cnblogs.com/cangqinglang/p/13877078.html
 18.div绑定键盘监听事件，
 
 div需要加tabIndex属性才能让整个div监听到键盘事件，否则只有在div中可以focus的位置比如input,textarea,button的位置才能监听到keydown
+=======
+## 9.MVC，MVP,MVVM
+
+#### 面向过程
+
+```js
+let btn = document.getElementsByClassName("btn")[0];
+let boxDom = document.getElementsByClassName("box")[0];
+let flag = true;
+btn.onclick = function(){
+    if(flag){
+        boxDom.style.display = "none";
+        flag = false;
+    }else{
+        boxDom.style.display = "block";
+        flag = true;
+    }
+}
+```
+
+#### MVC写法
+
+![img](https://www.pianshen.com/images/852/7f4f8b6e9027262bfb0a80fd03737574.png)
+
+![img](https://www.pianshen.com/images/329/bb19d7a8e53a070a126faf0bf2973801.png)
+
+```js
+ //view
+let boxDom = document.getElementsByClassName("box")[0];
+//model
+let model = {
+    isShow:true,
+    isBig:false
+}
+
+//controller 业务逻辑
+function Controller(){
+    this.init();//初始化
+}
+Controller.prototype = {
+    constructor:Controller,
+    init:function(){
+        this.addEvent()
+    },
+    addEvent:function(){
+        let btn = document.getElementsByClassName("btn")[0];
+        let btn2 = document.getElementsByClassName("btn2")[0];
+        let that = this;
+        btn.onclick = function(){
+            model.isShow = !model.isShow;
+            //更改视图了
+            that.render();
+        }
+        btn2.onclick = function(){
+            model.isBig = true;
+            //更改视图了
+            that.render();
+        }
+    },
+    render:function(){//数据驱动视图的更改
+        boxDom.style.display = model.isShow?"block":"none";
+        boxDom.style.width = model.isBig?"300px":"100px";
+    }
+}
+
+new Controller();//初始化一下
+```
+
+#### MVP
+
+![img](https://www.ruanyifeng.com/blogimg/asset/2015/bg2015020109.png)
+
+MVP 模式将 Controller 改名为 Presenter，同时改变了通信方向。
+
+1. 各部分之间的通信，都是双向的。
+
+2. View 与 Model 不发生联系，都通过 Presenter 传递。
+
+3. View 非常薄，不部署任何业务逻辑，称为"被动视图"（Passive View），即没有任何主动性，而 Presenter非常厚，所有逻辑都部署在那里
+
+#### MVVM
+
+MVVM 模式将 Presenter 改名为 ViewModel，基本上与 MVP 模式完全一致。
+
+唯一的区别是，它采用双向绑定（data-binding）：View的变动，自动反映在 ViewModel，反之亦然。
+
+m:model数据模型层  v:view视图层  vm:ViewModel
+vue中采用的是mvvm模式，这是从mvc衍生过来的
+MVVM让视图与viewmodel直接的关系特别的紧密，就是为了解决mvc反馈不及时的问题  
+
+图片说明一下：
+
+![8ef6d787d9ac6382443763424e92516e.png](https://www.pianshen.com/images/654/8ef6d787d9ac6382443763424e92516e.png)
+
+双向绑定的原理是什么：
+
+（当视图改变的时候更新模型层，当模型层改变的时候更新视图层）
+
+vue在创建vm的时候，会将数据配置在实例当中，然后会使用Object.defineProperty对这些数据进行处理，为这些数据添加getter与setter方法。当获取数据的时候，会触发对应的getter方法，当设置数据的时候，会触发对应的setter方法，从而进一步触发vm上的watcher方法，然后数据了，vm进一步去更新视图。
+
+**严格的MVVM要求View不能和Model直接通信，而Vue在组件提供了$refs这个属性，让Model可以直接操作View，违反了这一规定，所以说Vue没有完全遵循MVVM。**
+
+MVVM只能数据驱动视图，视图更改数据，而不能通过其他方式操作数据。
+
+Model变更触发View更新必须通过VewModel (Vue实例)。----- set时触发依赖，异步更新模板
+
+而View变更后触发Model也必须通过VIewMode。 ---------利用v-model指令 ， 用户手动输入数据  触发@input事件，更改数据。
+
+以上是MVVM的思想。
+
+>>>>>>> Stashed changes

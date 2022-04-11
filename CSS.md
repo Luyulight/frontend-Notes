@@ -565,6 +565,7 @@ reflow必然触发repaint
 
 8.position:absolute 负值定位到页面外面
 
+<<<<<<< Updated upstream
 
 
 
@@ -582,3 +583,6 @@ https://www.w3school.com.cn/tiy/c.asp?f=css_background-size&p=7
 并且动画 animation  也不能作用于inline元素上
 
 可以给span加display:inline-block;属性
+=======
+## 8.css动画
+>>>>>>> Stashed changes
