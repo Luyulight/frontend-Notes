@@ -1,3 +1,5 @@
+ 
+
 
 
 # 1.JavaScript介绍
@@ -488,15 +490,16 @@ console.log(f[Symbol.iterator]());
 ```
 
 ```js
- constructor(max) { 
- this.max = max; 
- this.idx = 0; 
- } 
- *[Symbol.iterator]() { 
-     while(this.idx < this.max) { 
-        yield this.idx++; 
+ class Emitter{
+    constructor(max,obj) { 
+         this.max = max; 
+         this.idx = 0; 
      } 
- } 
+     *[Symbol.iterator]() { 
+         while(this.idx < this.max) { 
+            yield this.idx++; 
+         } 
+     } 
 } 
 function count() { 
  let emitter = new Emitter(5); 
@@ -1611,6 +1614,380 @@ v3 = null;
 **静态分配(极端不考虑)**
 
 # 5.基本引用类型
+
+**引用值（或者对象）是某个特定引用类型的实例。**虽然从技术上讲JavaScript 是一门面向对象语言，但ECMAScript 缺少传统的面向对象编程语言所具备的某些基本结构，包括类和接口。引用类型有时候也被称为对象定义，因为它们描述了自己的对象应有的属性和方法。
+
+## 5.1Date
+
+```js
+let now = new Date();
+Date.parse(str) //返回日期的毫秒表示
+Date.UTC(year,month（0是1月）,[day,hour,minute,second,min-second])	//返回日期的毫秒表示
+```
+
+如果直接把表示日期的字符串传给Date 构造函数，那么Date 会在后台调用Date.parse()
+
+如果是变量组，会隐式调用Date.UTC()
+
+```js
+let someDate = new Date("May 23, 2019");
+//等价于
+let someDate = new Date(Date.parse("May 23, 2019"));
+```
+
+### 5.1.1 继承的方法
+
+与其他类型一样，Date 类型重写了toLocaleString()、toString()和valueOf()方法。但与
+其他类型不同，重写后这些方法的返回值不一样。
+
+Date 类型的toLocaleString()方法返回与浏览器运行的本地环境一致的日期和时间。这通常意味着格式中包含针对时间的AM（上午）或PM（下午），但不包含时区信息（具体格式可能因浏览器而不同）。
+
+toString()方法通常返回带时区信息的日期和时间，而时间也是以24 小时制（0~23）表示的。下面给出了toLocaleString()和toString()返回的2019 年2 月1 日零点的示例（地区为"en-US"的PST，即Pacific Standard Time，太平洋标准时间）：
+
+**Date 类型的valueOf()方法根本就不返回字符串，这个方法被重写后返回的是日期的毫秒表示。**
+
+所以date类型大于小于比较是直接用valueOf的返回值
+
+### 5.1.2日期格式化方法
+
+Date 类型有几个专门用于格式化日期的方法，它们都会返回字符串：
+ toDateString()显示日期中的周几、月、日、年（格式特定于实现）；
+ toTimeString()显示日期中的时、分、秒和时区（格式特定于实现）；
+ toLocaleDateString()显示日期中的周几、月、日、年（格式特定于实现和地区）；
+ toLocaleTimeString()显示日期中的时、分、秒（格式特定于实现和地区）；
+ toUTCString()显示完整的UTC 日期（格式特定于实现）。
+
+toGMTString()
+
+这些方法的输出与toLocaleString()和toString()一样，会因浏览器而异。因此不能用于在用户界面上一致地显示日期。
+
+### 5.1.3日期/时间组件方法
+
+```js
+getTime() //返回日期的毫秒表示；与valueOf()相同
+setTime(milliseconds) //设置日期的毫秒表示，从而修改整个日期
+getFullYear() //返回4 位数年（即2019 而不是19）
+getUTCFullYear() //返回UTC 日期的4 位数年
+setFullYear(year) //设置日期的年（year 必须是4 位数）
+setUTCFullYear(year) //设置UTC 日期的年（year 必须是4 位数）
+getMonth() //返回日期的月（0 表示1 月，11 表示12 月）
+getUTCMonth() //返回UTC 日期的月（0 表示1 月，11 表示12 月）
+setMonth(month) //设置日期的月（month 为大于0 的数值，大于11 加年）
+setUTCMonth(month) //设置UTC 日期的月（month 为大于0 的数值，大于11 加年）
+getDate() //返回日期中的日（1~31）
+getUTCDate() //返回UTC 日期中的日（1~31）
+setDate(date) //设置日期中的日（如果date 大于该月天数，则加月）
+setUTCDate(date) //设置UTC 日期中的日（如果date 大于该月天数，则加月）
+getDay() //返回日期中表示周几的数值（0 表示周日，6 表示周六）
+getUTCDay() //返回UTC 日期中表示周几的数值（0 表示周日，6 表示周六）
+getHours() //返回日期中的时（0~23）
+getUTCHours() //返回UTC 日期中的时（0~23）
+setHours(hours) //设置日期中的时（如果hours 大于23，则加日）
+setUTCHours(hours) //设置UTC 日期中的时（如果hours 大于23，则加日）
+getMinutes() //返回日期中的分（0~59）
+getUTCMinutes() //返回UTC 日期中的分（0~59）
+setMinutes(minutes) //设置日期中的分（如果minutes 大于59，则加时）
+setUTCMinutes(minutes) //设置UTC 日期中的分（如果minutes 大于59，则加时）
+getSeconds() //返回日期中的秒（0~59）
+getUTCSeconds() //返回UTC 日期中的秒（0~59）
+setSeconds(seconds) //设置日期中的秒（如果seconds 大于59，则加分）
+setUTCSeconds(seconds) //设置UTC 日期中的秒（如果seconds 大于59，则加分）
+getMilliseconds() //返回日期中的毫秒
+getUTCMilliseconds() //返回UTC 日期中的毫秒
+setMilliseconds(milliseconds) //设置日期中的毫秒
+setUTCMilliseconds(milliseconds) //设置UTC 日期中的毫秒
+getTimezoneOffset() //返回以分钟计的UTC 与本地时区的偏移量（如美国EST 即“东部标准时间”返回300，进入夏令时的地区可能有所差异）
+```
+
+## 5.2RegExp
+
+```js
+let expression = /pattern/flags
+```
+
+这个正则表达式的pattern（模式）可以是任何简单或复杂的正则表达式，包括字符类、限定符、
+分组、向前查找和反向引用。每个正则表达式可以带零个或多个flags（标记），用于控制正则表达式的行为。下面给出了表示匹配模式的标记。
+
+
+```js
+ g：全局模式，表示查找字符串的全部内容，而不是找到第一个匹配的内容就结束。
+ i：不区分大小写，表示在查找匹配时忽略pattern 和字符串的大小写。
+ m：多行模式，表示查找到一行文本末尾时会继续查找。
+ y：粘附模式，表示只查找从lastIndex 开始及之后的字符串。
+ u：Unicode 模式，启用Unicode 匹配。
+ s：dotAll 模式，表示元字符.匹配任何字符（包括\n 或\r）。
+let pattern1 = /at/g;// 匹配字符串中的所有"at"
+let pattern2 = /[bc]at/i;// 匹配第一个"bat"或"cat"，忽略大小写
+let pattern3 = /.at/gi;// 匹配所有以"at"结尾的三字符组合，忽略大小写
+```
+
+与其他语言中的正则表达式类似，所有元字符在模式中也必须转义，包括：
+
+```js
+( [ { \ ^ $ | ) ] } ? * + .
+```
+
+```js
+let pattern1 = /[bc]at/i;// 匹配第一个"bat"或"cat"，忽略大小写
+let pattern2 = /\[bc\]at/i;// 匹配第一个"[bc]at"，忽略大小写
+let pattern3 = /.at/gi;// 匹配所有以"at"结尾的三字符组合，忽略大小写
+let pattern4 = /\.at/gi;// 匹配所有".at"，忽略大小写
+```
+
+```js
+let pattern1 = /[bc]at/i;// 匹配第一个"bat"或"cat"，忽略大小写
+let pattern2 = new RegExp("[bc]at", "i");// 跟pattern1 一样，只不过是用构造函数创建的
+```
+
+此外，使用RegExp 也可以基于已有的正则表达式实例，并可选择性地修改它们的标记：
+
+```js
+const re1 = /cat/g;
+console.log(re1); // "/cat/g"
+const re2 = new RegExp(re1);
+console.log(re2); // "/cat/g"
+const re3 = new RegExp(re1, "i");
+console.log(re3); // "/cat/i"
+```
+
+### 5.2.1 RegExp 实例属性
+
+每个RegExp 实例都有下列属性，提供有关模式的各方面信息。
+
+```
+ global：布尔值，表示是否设置了g 标记。
+ ignoreCase：布尔值，表示是否设置了i 标记。
+ unicode：布尔值，表示是否设置了u 标记。
+ sticky：布尔值，表示是否设置了y 标记。
+ lastIndex：整数，表示在源字符串中下一次搜索的开始位置，始终从0 开始。
+ multiline：布尔值，表示是否设置了m 标记。
+ dotAll：布尔值，表示是否设置了s 标记。
+ source：正则表达式的字面量字符串（不是传给构造函数的模式字符串），没有开头和结尾的
+斜杠。
+ flags：正则表达式的标记字符串。始终以字面量而非传入构造函数的字符串模式形式返回（没
+有前后斜杠）。
+```
+
+### 5.2.2 RegExp 实例方法
+
+#### exec()
+
+RegExp 实例的主要方法是exec()，主要用于配合捕获组使用。这个方法只接收一个参数，即要应
+用模式的字符串。如果找到了匹配项，则返回包含第一个匹配信息的数组；如果没找到匹配项，则返回null。返回的数组虽然是Array 的实例，但包含两个额外的属性：index 和input。index 是字符串中匹配模式的起始位置，input 是要查找的字符串。这个数组的第一个元素是匹配整个模式的字符串，其他元素是与表达式中的捕获组匹配的字符串。如果模式中没有捕获组，则数组只包含一个元素。
+
+```js
+let text = "mom and dad and baby";
+let pattern = /mom( and dad( and baby)?)?/gi;
+let matches = pattern.exec(text);
+console.log(matches.index); // 0
+console.log(matches.input); // "mom and dad and baby"
+console.log(matches[0]); // "mom and dad and baby"
+console.log(matches[1]); // " and dad and baby"
+console.log(matches[2]); // " and baby
+```
+
+如果模式设置了全局标记，则每次调用exec()方法会返回一个匹配的信息。如果没有设置全局标
+记，则无论对同一个字符串调用多少次exec()，也只会返回第一个匹配的信息。
+
+如果模式设置了粘附标记y，则每次调用exec()就只会在lastIndex 的位置上寻找匹配项。粘附
+标记覆盖全局标记。
+
+#### test()
+
+正则表达式的另一个方法是test()，接收一个字符串参数。如果输入的文本与模式匹配，则参数
+返回true，否则返回false。
+
+### 5.2.3 RegExp 构造函数属性
+
+RegExp 构造函数本身也有几个属性。（在其他语言中，这种属性被称为静态属性。）这些属性适用
+于作用域中的所有正则表达式，而且会根据最后执行的正则表达式操作而变化。这些属性还有一特点，就是可以通过两种不同的方式访问它们。换句话说，每个属性都有一个全名和一个简写。
+
+```
+全 名       简 写       说 明
+input       $_          最后搜索的字符串（非标准特性）
+lastMatch   $&          最后匹配的文本
+lastParen   $+          最后匹配的捕获组（非标准特性）
+leftContext  $`         input 字符串中出现在lastMatch 前面的文本
+rightContext $'         input 字符串中出现在lastMatch 后面的文本
+```
+
+通过这些属性可以提取出与exec()和test()执行的操作相关的信息。来看下面的例子：
+
+```js
+let text = "this has been a short summer";
+let pattern = /(.)hort/g;
+if (pattern.test(text)) {
+    console.log(RegExp.input); // this has been a short summer
+    console.log(RegExp.leftContext); // this has been a
+    console.log(RegExp.rightContext); // summer
+    console.log(RegExp.lastMatch); // short
+    console.log(RegExp.lastParen); // s
+}
+```
+
+### 5.2.4 模式局限
+
+```
+虽然ECMAScript 对正则表达式的支持有了长足的进步，但仍然缺少Perl 语言中的一些高级特性。
+下列特性目前还没有得到ECMAScript 的支持（想要了解更多信息，可以参考RegularExpressions.info网站）：
+ \A 和\Z 锚（分别匹配字符串的开始和末尾）
+ 联合及交叉类
+ 原子组
+ x（忽略空格）匹配模式
+ 条件式匹配
+ 正则表达式注释
+虽然还有这些局限，但ECMAScript 的正则表达式已经非常强大，可以用于大多数模式匹配任务。
+```
+
+## 5.3 原始值包装类型
+
+**Boolean,Number,String**
+
+在以读模式访问原始值的值的任何时候，后台都会执行如下3步：
+
+①创建一个String/Boolean/Number类型实例
+
+②调用实例上的特定方法
+
+③销毁实例
+
+s2以读模式访问s1的值的时候
+
+等价于
+
+```js
+let s1 = new String("some text");
+let s2 = s1.substring(2);
+s1 = null;
+```
+
+引用类型与原始值包装类型的主要区别在于对象的生命周期。**在通过new 实例化引用类型后，得到**
+**的实例会在离开作用域时被销毁**，而**自动创建的原始值包装对象则只存在于访问它的那行代码执行期**
+**间**。这意味着不能在运行时给原始值添加属性和方法。
+
+```js
+let s1 = "some text";
+s1.color = "red";		// 此时临时自动创建的原始包装类型
+console.log(s1.color); // undefined  //类型已经销毁
+```
+
+在原始值包装类型的实例上调用typeof 会返回"object"，所有原始值包装对象都会转换为布尔true。
+
+另外，Object 构造函数作为一个工厂方法，能够根据传入值的类型返回相应原始值包装类型的实例。
+
+```js
+let obj = new Object("some text");        //obj是一个String类型实例
+console.log(obj instanceof String); // true
+typeof obj // object
+```
+
+```js
+let value = "25";
+let number = Number(value); // 转型函数
+console.log(typeof number); // "number"
+let obj = new Number(value); // 构造函数
+console.log(typeof obj); // "object"
+```
+
+### 5.3.1 Boolean
+
+Boolean 的实例会重写valueOf()方法，返回一个原始值true 或false。toString()方法被调用时也会被覆盖，返回字符串"true"或"false"。
+
+Boolean 对象在ECMAScript 中用得很少。不仅如此，它们还容易引起误会，尤其是**在布尔表达式中使用Boolean 对象时**。
+
+```js
+let falseObject = new Boolean(false);
+let result = falseObject && true;
+console.log(result); // true
+
+let falseValue = false;
+result = falseValue && true;
+console.log(result); // false
+```
+
+除此之外，原始值和引用值（Boolean 对象）还有几个区别。首先，typeof 操作符对原始值返回"boolean"，但对引用值返回"object"。同样，Boolean 对象是Boolean 类型的实例，在使用
+instaceof 操作符时返回true，但对原始值则返回false，如下所示：
+
+```js
+console.log(typeof falseObject); // object
+console.log(typeof falseValue); // boolean
+console.log(falseObject instanceof Boolean); // true
+console.log(falseValue instanceof Boolean); // false
+```
+
+### 5.3.2 Number
+
+与Boolean 类型一样，Number 类型重写了valueOf()、toLocaleString()和toString()方
+法。valueOf()方法返回Number 对象表示的原始数值，另外两个方法返回数值字符串。toString()方法可选地接收一个表示基数的参数，并返回相应基数形式的数值字符串，
+
+```js
+let num = 10;
+console.log(num.toString()); // "10"
+console.log(num.toString(2)); // "1010"
+console.log(num.toString(8)); // "12"
+console.log(num.toString(10)); // "10"
+console.log(num.toString(16)); // "a"
+```
+
+除了继承的方法，Number 类型还提供了几个用于将数值格式化为字符串的方法。
+
+#### toFixed()
+
+```js
+let num = 10;
+console.log(num.toFixed(2)); // "10.00" 小数点两位
+
+let num = 10.005;
+console.log(num.toFixed(2)); // "10.01"
+```
+
+toFixed()自动舍入的特点可以用于处理货币。不过要注意的是，多个浮点数值的数学计算不一定
+得到精确的结果。比如，0.1 + 0.2 = 0.30000000000000004。
+
+#### toExponential()
+
+```js
+let num = 10;
+console.log(num.toExponential(1)); // "1.0e+1" 科学计数法
+```
+
+#### toPrecision()
+
+toPrecision()方法会根据情况返回最合理的输出结果，可能是固定长度，也可能是科学记数法
+形式。这个方法接收一个参数，表示结果中数字的总位数（不包含指数）。
+
+```js
+let num = 99;
+console.log(num.toPrecision(1)); // "1e+2"
+console.log(num.toPrecision(2)); // "99"
+console.log(num.toPrecision(3)); // "99.0"
+```
+
+本质上，toPrecision()方法会根据数值和精度来决定调用toFixed()还是toExponential()。为了以正确的小数位精确表示数值，这3 个方法都会向上或向下舍入。
+
+#### Number.isInteger()
+
+ES6 新增了Number.isInteger()方法，用于辨别一个数值是否保存为整数。有时候，小数位的0
+可能会让人误以为数值是一个浮点值：
+
+```js
+console.log(Number.isInteger(1)); // true
+console.log(Number.isInteger(1.00)); // true
+console.log(Number.isInteger(1.01)); // false
+```
+
+#### Number.isSafeInteger()
+
+IEEE 754 数值格式有一个特殊的数值范围，在这个范围内二进制值可以表示一个整数值。这个数值范围从Number.MIN_SAFE_INTEGER（-2^53 + 1）到Number.MAX_SAFE_INTEGER（2^53  -1）。对超出这个范围的数值，即使尝试保存为整数，IEEE 754 编码格式也意味着二进制值可能会表示一个完全不同的数值。为了鉴别整数是否在这个范围内，可以使Number.isSafeInteger()方法：
+
+```js
+console.log(Number.isSafeInteger(-1 * (2 ** 53))); // false
+console.log(Number.isSafeInteger(-1 * (2 ** 53) + 1)); // true
+console.log(Number.isSafeInteger(2 ** 53)); // false
+console.log(Number.isSafeInteger((2 ** 53) - 1)); // true
+```
+
+### 5.3.3 String
 
 
 
