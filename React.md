@@ -567,3 +567,14 @@ conditionalConfirm("",()=>true).then(()=>{
 })
 ```
 
+实际上这种写法是没有必要的
+
+CSS chrome99 新特性 @layers
+
+
+
+16.useEffect依赖一个对象的state
+
+即使每次setState的都是相同元素值的对象，但实际上每次set的都是一个不同的对象，所以React会认为实际上一直在不停的刷新。
+
+所以这种情况应该选择把对象拆开用基本的数据类型进行存储state

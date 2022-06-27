@@ -569,7 +569,7 @@ reflow必然触发repaint
 
 
 
-8.background-size:cover,contain,100%,auto的区别
+## 8.background-size:cover,contain,100%,auto的区别
 
 https://www.w3school.com.cn/tiy/c.asp?f=css_background-size&p=7
 
@@ -577,8 +577,236 @@ https://www.w3school.com.cn/tiy/c.asp?f=css_background-size&p=7
 
 
 
-9.Transform的 scale属性不能作用于 inline元素上，例如span
+## 9.Transform的 scale属性不能作用于 inline元素上，例如span
 
 并且动画 animation  也不能作用于inline元素上
 
 可以给span加display:inline-block;属性
+
+
+
+## 10.使用CSS3变量，currentColor
+
+进行主题色切换时，可以父元素给color属性，子元素的边框背景等需要用的颜色全部使用currentColor这一变量来解决
+
+**Safari中的bug: ** safari中，如果父元素有的颜色属性，子元素切换导致父元素的color变化，safari只会重绘切换的子元素，会导致父元素以及同级的其他子元素的颜色仍是切换前的，因为没有重绘，
+
+而解决的办法也比较简单，如果是普通属性，使用css的will-change即可，
+
+如果是复杂的比如background-image：liner...的属性，则可能需要强制重绘，
+
+比如添加transition，如果解决不掉可以使用三方动画库，或者js控制重绘等等
+
+
+
+
+
+## 11.使用border-imgae
+
+实现裁剪边框和渐变边框
+
+https://www.jianshu.com/p/ba58fff0fb9e
+
+https://developer.mozilla.org/zh-CN/docs/Web/CSS/border-image
+
+
+
+## 12.letter-spacing设置字间距
+
+但是最后一个字也会带上一个间距，如果是居中的一段文字则会影响观感，
+
+解决办法，拆开最后一个字，前面的带间距，最后一个字的span不带
+
+
+
+## 13.canvas相关,使用canvas drawImage配置参数来模拟css的background -size cover / container效果
+
+https://stackoverflow.com/questions/21961839/simulation-background-size-cover-in-canvas
+
+http://t.zoukankan.com/AIonTheRoad-p-14063041.html
+
+```tsx
+getCropParams() {
+        let sx, sy, sw, sh
+        const imgRatio = this.bgRawWidth / this.bgRawHeight
+        const canvasRatio = this.width / this.height
+        if (imgRatio < canvasRatio) {
+            sw = this.bgRawWidth
+            sh = sw / canvasRatio
+            sx = 0
+            sy = (this.bgRawHeight - sh) / 2
+        } else {
+            sh = this.bgRawHeight
+            sw = sh * canvasRatio
+            sy = 0
+            sx = (this.bgRawWidth - sw) / 2
+        }
+        return { sx, sy, sw, sh }
+    }
+
+this.maskCtx.drawImage(
+            this.maskImg,
+            sx,
+            2 * sy,
+            sw,
+            sh,
+            0,
+            0,
+            this.width,
+            this.height
+        )
+```
+
+## 14.实现文字外描边的效果。
+
+无论是css还是svg的stroke相关的属性，实际上描边都是内外都有的居中描边
+
+所以字体内部的镂空实际上会比设计稿给的要细的多，
+
+有尝试过解决方法，如使用
+
+```pug
+svg(viewBox="0 0 1000 86")
+                            defs
+                                g#titlePv(fill="#771b19")
+                                    text(x="0" y="78")
+                                        tspan(font-size="104").num 002&nbsp;
+                                        tspan(font-size="102").en THE OVERTURE
+                                filter#strokePv 
+                                    feFlood(floodColor="#fff" result="white")
+                                    feFlood(floodColor="#394bce" result="white")
+                                    feMorphology(operator="dilate" radius="2 2" x="0%" y="0%" width="100%" height="100%" in="SourceAlpha" result="dilateText")
+                                    feComposite(in="colored" in2="dilateText" operator="in" result="coloredText")
+                                    //- feComposite(in="shadowFull" in2="SourceAlpha" operator="out" result="textShadow")
+                                mask#titleMask
+                                    use(xlink:href="#titlePv" )
+                            g   
+                                //- use(xlink:href="#titlePv" )
+                                text(x="0" y="78" filter="url(#strokePv)")
+                                        tspan(font-size="104").num 002&nbsp;
+                                        tspan(font-size="102").en THE OVERTURE
+                                text(x="0" y="78"  strokeWidth="1" stroke="#fff" fill="none")
+                                        tspan(font-size="104").num 002&nbsp;
+                                        tspan(font-size="102").en THE OVERTURE
+```
+
+filter组合的形式，用feMorphology使文字扩大一圈，使用mask来透过中间的部分，
+
+实际上的操作并有做出来，并且如上的代码仍然是抠了居中描边
+
+有一种想法是，使用canvas，strokeText，使用堆叠方式destination-out，再叠一个fillText，把居中描边的内描边部分抠除，剩余的部分即是外描边，
+
+实现代码如下
+
+```typescript
+drawCanvas(step: number, key: string) {
+        const ctx = this.titleCanvas.getContext("2d")
+        ctx.font = "104px Bender-Bold"
+        ctx.lineWidth = 4
+        ctx.textBaseline = "hanging"
+        ctx.strokeText("002", 0, 0)
+        ctx.globalCompositeOperation = "destination-out"
+        ctx.fillText("002", 0, 0)
+        ctx.globalCompositeOperation = "source-over"
+        ctx.strokeText("002", 300, 0)
+    }
+```
+
+有一点就是canvas的textBaseline的文字对齐属性hanging在safari上的支持不是很好，如果调了对齐的话会有问题，并且有些字体的加载也会有问题
+
+解决方案目前是：textBaseline = "alphabetic" ，然后调绘制的y坐标来实现对齐
+
+## 15.flex的灵活运用，左3右1切换中4，响应式布局
+
+想实现一个，左3右1的左menu右detail布局；
+
+在PC端上，选中的menu要实现放大并且高度增加，挤压其他menu
+
+该在移动端的页面上要变成竖排布局，并且哪个menu选中后，detail就出现在那哪个menu后面
+
+认真分析以后，可以用flex布局，仅用一个容器来实现切换
+
+```pug
+//HTML
+.chapterContainer 
+                    .chap1.active 
+                    .chap2 
+                    .chap3 
+                    .detail
+```
+
+CSS
+
+```LESS
+.chapterContainer {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    @media @desktop {
+        top: 8rem;
+        left: 20rem;
+        width: 1000px;
+        height: 500px;
+        background-color: antiquewhite;
+        flex-wrap: wrap;
+        .chap1,
+        .chap2,
+        .chap3 {
+            width: 20rem;
+            height: 20%;
+        }
+        .active {
+            height: 60%;
+        }
+
+        .detail {
+            height: 100%;
+            width: calc(100% - 20rem);
+            background-color: forestgreen;
+        }
+    }
+    @media @phone {
+        left: 2.5rem;
+        top: 8rem;
+        width: calc(100% - 5rem);
+        height: calc(100% - 20rem);
+        background-color: antiquewhite;
+        .chap1,
+        .chap2,
+        .chap3 {
+            width: 100%;
+            height: 10rem;
+            order: initial;
+        }
+        .detail {
+            flex: 1;
+            background-color: forestgreen;
+            order: 3;
+        }
+        .chap1 {
+            order: 0;
+        }
+        .chap2 {
+            order: 2;
+        }
+        .chap3 {
+            order: 4;
+        }
+    }
+    .chap1 {
+        background-color: aqua;
+    }
+    .chap2 {
+        background-color: yellowgreen;
+    }
+    .chap3 {
+        background-color: palevioletred;
+    }
+}
+```
+
+ 选中的菜单添加active class
+
+并且对.detail 根据选择设置order为1,3,5
+
+即可实现效果
