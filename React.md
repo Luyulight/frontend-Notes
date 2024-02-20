@@ -344,7 +344,7 @@ export const AddUserModal:React.FC<{group:groupItem|undefined,callback:()=>void}
 
 在第一次挂载的时候给AddUserModal的原型挂上show和hide方法，而在其他任意地方使用到模态框仅需要AddUserModal.show()即可
 
-### 12.在局部模块修改全局框架的样式
+## 12.在局部模块修改全局框架的样式
 
 比如在一个业务modal中，需要对antd的Radio.Group组件的disable的样式进行修改。
 
@@ -419,7 +419,7 @@ import './additional.css'
 
 
 
-### 13.做一个input删除的拦截，如果是{{x}}的data则整块删除
+## 13.做一个input删除的拦截，如果是{{x}}的data则整块删除
 
 ```react
 const [value, setValue] = useState("{{abc}}{{def}}")
@@ -451,7 +451,7 @@ const [value, setValue] = useState("{{abc}}{{def}}")
 ></input>
 ```
 
-### 14.多个组件的执行顺序
+## 14.多个组件的执行顺序
 
 #### 1. 父子组件
 
@@ -503,7 +503,7 @@ const [value, setValue] = useState("{{abc}}{{def}}")
 
   所以，兄弟组件更新、卸载阶段，请参考 **父子组件**。
 
-### 15.事件处理过程中需要弹窗进行验证以进行后续操作
+## 15.事件处理过程中需要弹窗进行验证以进行后续操作
 
 通常我们能想到的是直接在代码中调用Modal.confirm()
 
@@ -578,3 +578,23 @@ CSS chrome99 新特性 @layers
 即使每次setState的都是相同元素值的对象，但实际上每次set的都是一个不同的对象，所以React会认为实际上一直在不停的刷新。
 
 所以这种情况应该选择把对象拆开用基本的数据类型进行存储state
+
+
+
+17.React需要在一个子节点中渲染外部ReactNode
+
+使用ReactDom.createPortal(child,container)
+
+
+
+18.React内部render使用anchor组件并且跟随外部容器的滚动进行锚点切换
+
+在外层容器使用context,并且封装到hooks中，在目标层的组件内直接调用hooks
+
+
+
+
+
+19.UseCallback时，不能只看callback调用了哪些变量来写依赖，
+
+而应该分析什么时候触发了callback，触发的时候有没有其他在callback内调用其他function依赖的state发生变化

@@ -475,3 +475,158 @@ key(index) —— 获取某个索引的key
 
 待完成
 
+
+
+9.setCookie, 登陆token的，sessionId的设置方式
+
+
+
+10.safari canvas 绘制canvas区域不刷新不触发浏览器重绘的问题
+
+见活动 - 大帝的cypher挑战-结果页评语绘制
+
+打字机效果绘制代码片段如图所示
+
+```typescript
+ const writing = (ts: number) => {
+            if (ts - updatedAt > 31) {
+                updatedAt = ts
+                if (alreadyDrawLength < content.length) {
+                    let toDraw = ""
+                    let widthTemp = 0
+                    for (let i = 0; i < stepGap; i++) {
+                        const offset = currentStep * stepGap
+                        const element = content.charAt(offset + i)
+                        const measured = ctx.measureText(drawContent + element)
+                        if (measured.width >= restSpace) {
+                            ctx.fillText(toDraw, drawX, drawY + offsetY)
+                            restSpace = maxWidth
+                            drawX = 0
+                            drawY += fontSize * lineHeight
+                            lines++
+                            toDraw = element
+                            widthTemp += measured.width
+                        } else {
+                            toDraw += element
+                            widthTemp += measured.width
+                        }
+                    }
+                    if (toDraw) {
+                        lines++
+                        //插入的bugfix代码
+                        ctx.strokeStyle = "transparent"
+                        ctx.strokeRect(0, 0, canvas.width, canvas.height)
+                        //如上
+                        ctx.fillText(toDraw, drawX, drawY + offsetY)
+                        drawX += widthTemp
+                        restSpace -= widthTemp
+                    }
+                    currentStep++
+                    alreadyDrawLength += stepGap
+                } else {
+                    return true
+                }
+            }
+            requestAnimationFrame(writing)
+        }
+        requestAnimationFrame(writing)
+```
+
+使用如上的假stroke来强制触发safari浏览器的重绘
+
+
+
+11.js浏览器复制内容到剪贴板
+
+```react
+import { useCallback } from "react"
+
+export default function (text: string) {
+    return useCallback(() => {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text)
+        } else {
+            const textarea = document.createElement("textarea")
+            // 隐藏此输入框
+            textarea.style.position = "fixed"
+            textarea.style.clip = "rect(0 0 0 0)"
+            textarea.style.top = "10px"
+            textarea.style.left = "10px"
+            textarea.style.opacity = "0"
+            textarea.style.pointerEvents = "none"
+
+            // 赋值
+            textarea.value = text
+            // 防止在safari中弹出键盘造成两次屏幕高度变化
+            textarea.readOnly = true
+            // 选中
+            document.body.appendChild(textarea)
+            textarea.select()
+            // 复制
+            document.execCommand("copy", true)
+            // 移除输入框
+            document.body.removeChild(textarea)
+        }
+    }, [text])
+}
+```
+
+textArea.select()在safari中会触发键盘的弹出，需要设置readOnly来规避
+
+
+
+12.post请求上传文件
+
+Request Header:
+
+​	Content-Type:multipart/form-data; boundary=(一串code)
+
+
+
+RequestBody:
+
+​	(-一串Code)
+
+```
+POST https://dlog.luyulight.cn/api/parser/updateMaze
+401
+142 ms
+POST /api/parser/updateMaze HTTP/1.1
+User-Agent: PostmanRuntime/7.28.4
+Accept: */*
+Postman-Token: 8f7cffce-19d9-4969-90b9-29d2e26a16b8
+Host: dlog.luyulight.cn
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Type: multipart/form-data; boundary=--------------------------927031754929159781597071
+Content-Length: 746793
+ 
+----------------------------927031754929159781597071
+Content-Disposition: form-data; name="test_file"; filename="bg.jpg"
+<bg.jpg>
+----------------------------927031754929159781597071
+Content-Disposition: form-data; name="test_str"
+test1
+----------------------------927031754929159781597071--
+ 
+HTTP/1.1 401 Unauthorized
+Server: nginx/1.18.0
+Date: Wed, 31 May 2023 14:22:15 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 63
+Connection: keep-alive
+X-Powered-By: Express
+ETag: W/"3f-jEC9sqXnkufdNGuKndga59VtyJw"
+ 
+{"statusCode":401,"message":"未登录","error":"Unauthorized"}
+```
+
+postman用view菜单-show postman console看完整请求
+
+apifox用生成代码-看模拟的完整请求
+
+
+
+13.sessionStorage，在同一标签页内针对每个host单独存储 ，前进后退href都不会清除sessionStorage
+
+特别的：关闭标签页后从历史记录重新打开，sessionStorage内容依旧存在

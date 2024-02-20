@@ -163,3 +163,34 @@ import styles from './App.css';
 },
 ```
 
+3.在parcel项目中打包react
+
+首先parcel入口设置为.pug文件，在.pug文件中写入html结构并且引入.ts/.tsx的react入口文件来结束打包流程。
+
+在parcel的情况下会有className挂不上去的问题，原因是在parcel1中没有postcss的原生支持，需要安装^3.0.0版本的postcss 来完成css modules的引入
+
+```
+
+
+//TODO  LIST 
+首页布局切图校准
+
+HOME页全局 loading
+页面H5响应式布局
+
+HOME-CANCEL切换过渡动画 
+
+按纽加入loading
+
+协议加padding
+
+验证页  需要一个tips
+
+
+通用页脚
+
+
+
+
+
+

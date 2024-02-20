@@ -943,3 +943,24 @@ div需要加tabIndex属性才能让整个div监听到键盘事件，否则只有
 19.JS 数组转树，树转数组
 
 https://www.cnblogs.com/mengff/p/13142128.html
+
+20.intersectionObserver监听相交滚动
+
+
+
+21.JS中浮点数精度问题
+
+```
+正常的取小数方法一般是
+const a =  Math.round(a*1000)/1000,
+这种情况是没问题的，
+但是如果 console.log(`${a *100}%`)
+会有概率出现 .00000000001的情况
+这个是javascript浮点数的bug，。
+
+尝试过用 const a = parseFloat(a.toPresicion(3))来解决，
+但是在*100打印后仍然会有问题
+
+最后得出结果，取过整的数也不要轻易乘除加减，而是在最终输出的时候进行取整
+```
+

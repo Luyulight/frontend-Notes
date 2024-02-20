@@ -8,7 +8,27 @@ created
 
 
 
-
-
 对于操作日志，可以使用拦截器来做
+
+
+
+nest start 找不到main module
+
+首先nest start 走的是tsc编译，
+
+引入了外层的内容，所以外层的整个目录结构会被tsc引入进来否则import无法转义。
+
+nest start 过程做的事情
+
+看nest-cli 源码
+
+```
+    let outputFilePath = join(outDirName, sourceRoot, entryFile);
+    if (!fs.existsSync(outputFilePath + '.js')) {
+      outputFilePath = join(outDirName, entryFile);
+    }
+    
+   //先找 dist/src/main.js
+   如果没有，找 dist/main.js
+```
 
